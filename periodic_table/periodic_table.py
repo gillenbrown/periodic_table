@@ -7,7 +7,8 @@ from .element import Element
 bpl.presentation_style()
 
 def _make_blank(fig, axs):
-    fig.patch.set_alpha(0.0)
+    # fig.patch.set_alpha(0.0)
+    fig.set_facecolor("white")
 
     for ax in axs.flatten():
         ax.remove_labels("both")
@@ -73,20 +74,20 @@ def add_labels(fig, sources, highlight):
     if "BB" in sources:
         add_single_label(ax_temp, 0, 3, "Big Bang", elts[0].colors["BB"], "BB"==highlight)
     if "CR" in sources:
-        add_single_label(ax_temp, 1, 3, "Cosmic Rays", elts[0].colors["CR"], "CR"==highlight)
+        add_single_label(ax_temp, 1, 3, "Cosmic Ray Spallation", elts[0].colors["CR"], "CR"==highlight)
     if "S" in sources or "AGB" in sources:
         highlight_flag = highlight == "AGB" or highlight == "S" or highlight == "low mass"
-        add_single_label(ax_temp, 0, 2, "Small Stars", elts[0].colors["S"], highlight_flag)
+        add_single_label(ax_temp, 0, 2, "Low Mass Stars", elts[0].colors["S"], highlight_flag)
     if "SNII" in sources:
-        add_single_label(ax_temp, 1, 2, "Exploding Big Stars", elts[0].colors["SNII"], "SNII"==highlight)
+        add_single_label(ax_temp, 1, 2, "Exploding Massive Stars", elts[0].colors["SNII"], "SNII"==highlight)
     if "SNIa" in sources:
         add_single_label(ax_temp, 0, 1, "Exploding White Dwarfs", elts[0].colors["SNIa"], "SNIa"==highlight)
     if "R" in sources:
-        add_single_label(ax_temp, 1, 1, "Exploding Neutron Stars", elts[0].colors["R"], "R"==highlight)
+        add_single_label(ax_temp, 1, 1, "Exploding Neutron Stars?", elts[0].colors["R"], "R"==highlight)
     if "decay" in sources:
-        add_single_label(ax_temp, 0, 0, "Atoms Splitting", elts[0].colors["decay"], "decay"==highlight)
+        add_single_label(ax_temp, 0, 0, "Nuclear Decay", elts[0].colors["decay"], "decay"==highlight)
     if "unstable" in sources:
-        add_single_label(ax_temp, 1, 0, "Not Naturally Occuring", elts[0].colors["unstable"], "unstable"==highlight)
+        add_single_label(ax_temp, 1, 0, "Not Naturally Occurring", elts[0].colors["unstable"], "unstable"==highlight)
         
 
     ax_temp.plot([3, 3.6666666, 3.666666, 4], [5.5, 5.5, 2.5, 2.5], lw=4, c=bpl.almost_black)
@@ -213,7 +214,7 @@ elts = [Element(1,   "H",  1,  1,  frac_bb=1.0),
         Element(118, "Og", 7,  18, frac_unstable=1.0)
        ]
 
-def make_periodic_table(sources, highlight, savename):
+def make_periodic_table(sources, highlight, savename=None, dpi=300):
     fig, axs = bpl.subplots(ncols=18+2, nrows=10+2, figsize=[20, 12],
                             gridspec_kw={"hspace":0, "wspace":0,
                                          "left": 0, "right": 1,
@@ -225,6 +226,9 @@ def make_periodic_table(sources, highlight, savename):
         elt.box_fill(sources, axs, highlight)
 
     add_labels(fig, sources, highlight)
+
+    if savename is not None:
+        fig.savefig(savename, dpi=dpi)
 
 
 #TODO: Finish cleaning up the Element class
@@ -238,4 +242,8 @@ def make_periodic_table(sources, highlight, savename):
 #TODO: instead of filling things in with white, have the code do the fill
 #      above the 1-frac line. This only works for things with 2 sources, though
 #TODO: have a check that all elements other than He and Li are only two sources
-#      at most. 
+#      at most.
+#TODO: add description to GitHub page
+#TODO: allow user to customize names
+#TODO: allow user to customize background color (none or white, at least)
+#TODO: add multiple color schemes - pretty or visually distinct

@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.patheffects as PathEffects
+import betterplotlib as bpl
 
 def box_fraction_line(frac):
     """
@@ -74,13 +76,13 @@ class Element(object):
                 raise ValueError("Fractions must be between 0 and 1.")
 
         self.colors = {"BB":       "#D7E5CC",
-                       "CR":       "#C3DDEA",
+                       "CR":       "#C3DDFA",
                        "SNIa":     "#fe9443",
                        "SNII":     "#FEE844",
                        "R":        "#AFBF75",
                        "S":        "#73A0CC",
-                       "decay":    "#CCCCDD",
-                       "unstable": "#CCBBBB"}
+                       "decay":    "#DDCCDD",
+                       "unstable": "#CCCCCC"}
         self.colors["AGB"] = self.colors["S"]
 
     def _get_ax(self, axs_array):
