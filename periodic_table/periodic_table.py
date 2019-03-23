@@ -162,6 +162,7 @@ class PeriodicTable(object):
         self.elts = elts
 
         for elt in self.elts:
+            elt.fill_elt()
             elt.label_elt(highlight_source="")
 
     def _setup_blank_table(self):

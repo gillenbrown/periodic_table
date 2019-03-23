@@ -62,17 +62,19 @@ class Element(object):
                 raise ValueError("Fractions must be between 0 and 1.")
 
 
-    def label_elt(self, highlight_source):
-        if self.elt_name_txt is not None:
-            self.elt_name_txt.remove()
-            del self.elt_name_txt
-
+    def fill_elt(self):
         self.ax.set_facecolor("w")
         self.ax.patch.set_alpha(1.0)
         # add the borders to the box
         lw = 5
         for s in self.ax.spines.values():
             s.set_linewidth(lw)
+
+    def label_elt(self, highlight_source):
+        if self.elt_name_txt is not None:
+            self.elt_name_txt.remove()
+            del self.elt_name_txt
+
 
         fontsize = 30
 
