@@ -32,31 +32,17 @@ def box_fraction_line(frac):
 
 
 class Element(object):
-    def __init__(self, number, symbol, row, column,
+    def __init__(self, number, symbol, ax,
                  frac_bb=0.0, frac_cr=0.0,
                  frac_snia=0.0, frac_snii=0.0, frac_agb=0.0,
                  frac_s=0.0, frac_r=0.0,
                  frac_decay=0.0, frac_unstable=0.0):
-        """
 
-        :param number:
-        :param symbol:
-        :param row:
-        :param column:
-        :param frac_bb:
-        :param frac_cr:
-        :param frac_snia:
-        :param frac_snii:
-        :param frac_agb:
-        :param frac_s:
-        :param frac_r:
-        :param frac_decay:
-        :param frac_unstable:
-        """
         self.number = number
         self.symbol = symbol
-        self.row = row
-        self.column = column
+        self.ax = ax
+
+        self.elt_name_txt = None
 
         self.fracs = {"BB":       frac_bb,
                       "CR":       frac_cr,
@@ -75,26 +61,17 @@ class Element(object):
             if frac < 0 or frac > 1:
                 raise ValueError("Fractions must be between 0 and 1.")
 
-        self.colors = {"BB":       "#D7E5CC",
-                       "CR":       "#C3DDFA",
-                       "SNIa":     "#fe9443",
-                       "SNII":     "#FEE844",
-                       "R":        "#AFBF75",
-                       "S":        "#73A0CC",
-                       "decay":    "#DDCCDD",
-                       "unstable": "#CCCCCC"}
-        self.colors["AGB"] = self.colors["S"]
 
-    def _get_ax(self, axs_array):
-        return axs_array[self.row][self.column]
+    def label_elt(self, highlight_source):
+        if self.elt_name_txt is not None:
+            self.elt_name_txt.remove()
+            del self.elt_name_txt
 
-    def box_no_fill(self, axs_array, highlight_source):
-        ax = self._get_ax(axs_array)
-        ax.set_facecolor("w")
-        ax.patch.set_alpha(1.0)
+        self.ax.set_facecolor("w")
+        self.ax.patch.set_alpha(1.0)
         # add the borders to the box
         lw = 5
-        for s in ax.spines.values():
+        for s in self.ax.spines.values():
             s.set_linewidth(lw)
 
         fontsize = 30
@@ -110,26 +87,28 @@ class Element(object):
 
         if highlight:
             highlight_color = "white"
-            txt = ax.add_text(x=0.5, y=0.65, text=self.symbol,
-                              coords="axes", fontsize=fontsize,
-                              color=highlight_color,
-                              horizontalalignment="center",
-                              verticalalignment="center")
+            txt = self.ax.add_text(x=0.5, y=0.65, text=self.symbol,
+                                   coords="axes", fontsize=fontsize,
+                                   color=highlight_color,
+                                   horizontalalignment="center",
+                                   verticalalignment="center")
             txt.set_path_effects([PathEffects.withStroke(linewidth=5,
                                                          foreground=bpl.almost_black)])
+            self.elt_name_txt = txt
 
         else:
-            ax.add_text(x=0.5, y=0.65, text=self.symbol,
-                        coords="axes", fontsize=fontsize,
-                        horizontalalignment="center",
-                        verticalalignment="center")
+            txt = self.ax.add_text(x=0.5, y=0.65, text=self.symbol,
+                                   coords="axes", fontsize=fontsize,
+                                   horizontalalignment="center",
+                                   verticalalignment="center")
+            self.elt_name_txt = txt
 
-        ax.add_text(x=0.5, y=0.25, text=self.number,
-                    coords="axes", fontsize=0.6 * fontsize,
-                    horizontalalignment="center",
-                    verticalalignment="center")
+        self.ax.add_text(x=0.5, y=0.25, text=self.number,
+                         coords="axes", fontsize=0.6 * fontsize,
+                         horizontalalignment="center",
+                         verticalalignment="center")
 
-        ax.remove_labels("both")
+
 
     def box_fill(self, sources, axs_array, highlight_source=""):
         # first make the empty cells

@@ -2,24 +2,27 @@ import pytest
 
 from periodic_table import Element, box_fraction_line
 
+import betterplotlib as bpl
 from scipy import integrate
 import numpy as np
 
 np.random.seed(0)
 
+fig, junk_ax = bpl.subplots()
+
 def test_fracs_in_range():
     with pytest.raises(ValueError):
-        Element("H", 1, 1, 1, frac_bb=-0.1)
+        Element("H", 1, junk_ax, frac_bb=-0.1)
     with pytest.raises(ValueError):
-        Element("H", 1, 1, 1, frac_agb=1.1)
-    Element("H", 1, 1, 1, frac_bb=1.0)  # no error
+        Element("H", 1, junk_ax, frac_agb=1.1)
+    Element("H", 1, junk_ax, frac_bb=1.0)  # no error
 
 def test_fracs_sum_to_one():
     with pytest.raises(ValueError):
-        Element("H", 1, 1, 1, frac_bb=0.1)
+        Element("H", 1, junk_ax, frac_bb=0.1)
     with pytest.raises(ValueError):
-        Element("H", 1, 1, 1, frac_r=0.8)
-    Element("H", 1, 1, 1, frac_bb=1.0)  # no error
+        Element("H", 1, junk_ax, frac_r=0.8)
+    Element("H", 1, junk_ax, frac_bb=1.0)  # no error
 
 def test_fraction_line_zero():
     # the real test here is whether the area under the curve integrates to
