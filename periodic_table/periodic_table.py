@@ -196,6 +196,71 @@ class PeriodicTable(object):
                           lw=4, c=bpl.almost_black)
 
 
+    def make_visible(self, bb=False, cr=False, agb=False, snia=False,
+                     snii=False, s=False, r=False, decay=False, unstable=False):
+        sources = []
+        if bb:
+            sources.append("BB")
+        if cr:
+            sources.append("CR")
+        if agb:
+            sources.append("AGB")
+        if snia:
+            sources.append("SNIa")
+        if snii:
+            sources.append("SNII")
+        if s:
+            sources.append("S")
+        if r:
+            sources.append("R")
+        if decay:
+            sources.append("decay")
+        if unstable:
+            sources.append("unstable")
+
+        self.source_flags["BB"] = bb
+        self.source_flags["CR"] = cr
+        self.source_flags["AGB"] = agb
+        self.source_flags["SNIa"] = snia
+        self.source_flags["SNII"] = snii
+        self.source_flags["S"] = s
+        self.source_flags["R"] = r
+        self.source_flags["decay"] = decay
+        self.source_flags["unstable"] = unstable
+
+        self.build_legend()
+
+        for elt in self.elts:
+            elt.box_fill(sources, self.colors)
+
+    def build_legend(self):
+        if self.source_flags["BB"]:
+            add_single_label(ax_temp, 0, 3, "Big Bang", elts[0].colors["BB"],
+                             "BB" == highlight)
+        if "CR" in sources:
+            add_single_label(ax_temp, 1, 3, "Cosmic Ray Spallation",
+                             elts[0].colors["CR"], "CR" == highlight)
+        if "S" in sources or "AGB" in sources:
+            highlight_flag = highlight == "AGB" or highlight == "S" or highlight == "low mass"
+            add_single_label(ax_temp, 0, 2, "Low Mass Stars",
+                             elts[0].colors["S"], highlight_flag)
+        if "SNII" in sources:
+            add_single_label(ax_temp, 1, 2, "Exploding Massive Stars",
+                             elts[0].colors["SNII"], "SNII" == highlight)
+        if "SNIa" in sources:
+            add_single_label(ax_temp, 0, 1, "Exploding White Dwarfs",
+                             elts[0].colors["SNIa"], "SNIa" == highlight)
+        if "R" in sources:
+            add_single_label(ax_temp, 1, 1, "Exploding Neutron Stars?",
+                             elts[0].colors["R"], "R" == highlight)
+        if "decay" in sources:
+            add_single_label(ax_temp, 0, 0, "Nuclear Decay",
+                             elts[0].colors["decay"], "decay" == highlight)
+        if "unstable" in sources:
+            add_single_label(ax_temp, 1, 0, "Not Naturally Occurring",
+                             elts[0].colors["unstable"],
+                             "unstable" == highlight)
+
     def set_colors(self, bb_color=None, cr_color=None, agb_color=None,
                    snia_color=None, snii_color=None, r_color=None,
                    s_color=None, decay_color=None, unstable_color=None):
@@ -221,83 +286,52 @@ class PeriodicTable(object):
 
 
 
-def add_single_label(ax, x_idx, y_idx, text, color, highlight=False):
-    # idx starts from bottom left
-    fontsize = 27
-    
-    spacing = 0.25
-    
-    # X space goes from 3 to 13. 
-    x_0 = 3
-    x_1 = 13
-    width_rect = ((x_1 - x_0) - 3 * spacing) / 2.0
-    
-    # Y space goes from 8 to 11
-    y_0 = 8
-    y_1 = 11
-    height_rect = ((y_1 - y_0) - 4 * spacing) / 4.0
+    def add_single_label(ax, x_idx, y_idx, text, color, highlight=False):
+        # idx starts from bottom left
+        fontsize = 27
 
-    dx_text = width_rect / 2.0
-    dy_text = height_rect / 2.0
-    
-    x = x_0 + spacing * (x_idx + 1) + width_rect * x_idx
-    y = y_0 + spacing * (y_idx + 1) + height_rect * y_idx
-    
-    if x_idx == 2:  # Make manmade go all the way over
-        width_rect = 5 - spacing
-        # This has to be done now so the position is calculated
-        # properly previously
-    
-    rect = patches.Rectangle((x, y), width_rect, height_rect,
-                             fill=True, facecolor=color,
-                             linewidth=1, edgecolor=bpl.almost_black,
-                             alpha=1.0, zorder=2)
-    ax.add_patch(rect)
-    
-    if highlight:
-        highlight_color = "white" 
-        txt = ax.add_text(x=x+dx_text, y=y+dy_text,
-                          ha="center", va="center", zorder=3,
-                          color=highlight_color,
-                          text=text, fontsize=fontsize)
-        txt.set_path_effects([PathEffects.withStroke(linewidth=4, foreground=bpl.almost_black)])
-    else:        
-        ax.add_text(x=x+dx_text, y=y+dy_text,
-                    ha="center", va="center", zorder=3,
-                    text=text, fontsize=fontsize)
+        spacing = 0.25
 
-def add_labels(fig, sources, highlight):
+        # X space goes from 3 to 13.
+        x_0 = 3
+        x_1 = 13
+        width_rect = ((x_1 - x_0) - 3 * spacing) / 2.0
 
-    
-    if "BB" in sources:
-        add_single_label(ax_temp, 0, 3, "Big Bang", elts[0].colors["BB"], "BB"==highlight)
-    if "CR" in sources:
-        add_single_label(ax_temp, 1, 3, "Cosmic Ray Spallation", elts[0].colors["CR"], "CR"==highlight)
-    if "S" in sources or "AGB" in sources:
-        highlight_flag = highlight == "AGB" or highlight == "S" or highlight == "low mass"
-        add_single_label(ax_temp, 0, 2, "Low Mass Stars", elts[0].colors["S"], highlight_flag)
-    if "SNII" in sources:
-        add_single_label(ax_temp, 1, 2, "Exploding Massive Stars", elts[0].colors["SNII"], "SNII"==highlight)
-    if "SNIa" in sources:
-        add_single_label(ax_temp, 0, 1, "Exploding White Dwarfs", elts[0].colors["SNIa"], "SNIa"==highlight)
-    if "R" in sources:
-        add_single_label(ax_temp, 1, 1, "Exploding Neutron Stars?", elts[0].colors["R"], "R"==highlight)
-    if "decay" in sources:
-        add_single_label(ax_temp, 0, 0, "Nuclear Decay", elts[0].colors["decay"], "decay"==highlight)
-    if "unstable" in sources:
-        add_single_label(ax_temp, 1, 0, "Not Naturally Occurring", elts[0].colors["unstable"], "unstable"==highlight)
+        # Y space goes from 8 to 11
+        y_0 = 8
+        y_1 = 11
+        height_rect = ((y_1 - y_0) - 4 * spacing) / 4.0
+
+        dx_text = width_rect / 2.0
+        dy_text = height_rect / 2.0
+
+        x = x_0 + spacing * (x_idx + 1) + width_rect * x_idx
+        y = y_0 + spacing * (y_idx + 1) + height_rect * y_idx
+
+        if x_idx == 2:  # Make manmade go all the way over
+            width_rect = 5 - spacing
+            # This has to be done now so the position is calculated
+            # properly previously
+
+        rect = patches.Rectangle((x, y), width_rect, height_rect,
+                                 fill=True, facecolor=color,
+                                 linewidth=1, edgecolor=bpl.almost_black,
+                                 alpha=1.0, zorder=2)
+        ax.add_patch(rect)
+
+        if highlight:
+            highlight_color = "white"
+            txt = ax.add_text(x=x+dx_text, y=y+dy_text,
+                              ha="center", va="center", zorder=3,
+                              color=highlight_color,
+                              text=text, fontsize=fontsize)
+            txt.set_path_effects([PathEffects.withStroke(linewidth=4, foreground=bpl.almost_black)])
+        else:
+            ax.add_text(x=x+dx_text, y=y+dy_text,
+                        ha="center", va="center", zorder=3,
+                        text=text, fontsize=fontsize)
 
 
-def make_periodic_table(sources, highlight, savename=None, dpi=300):
-
-
-    for elt in elts:
-        elt.box_fill(sources, axs, highlight)
-
-    add_labels(fig, sources, highlight)
-
-    if savename is not None:
-        fig.savefig(savename, dpi=dpi)
 
 
 #TODO: Finish cleaning up the Element class

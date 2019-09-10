@@ -112,10 +112,7 @@ class Element(object):
 
 
 
-    def box_fill(self, sources, axs_array, highlight_source=""):
-        # first make the empty cells
-        self.box_no_fill(axs_array, highlight_source)
-
+    def box_fill(self, sources, colors):
         # then add certain sources. Here are the rules:
         # BB: full (except He and Li)
         # CR: full (except Li)
@@ -130,52 +127,51 @@ class Element(object):
         under = ["BB", "CR", "R", "SNII", "manmade"]
         over = ["AGB", "S", "SNIa"]
 
-        ax = self._get_ax(axs_array)
         xs = [-1, 2]
         if self.symbol == "He":
             # Fill the background with SNII, then half of it with AGB,
             # then the normal BB fill
             if "SNII" in sources:
-                ax.fill_between(x=xs, y1=[-1, -1], y2=[2, 2],
-                                color=self.colors["SNII"], zorder=0)
+                self.ax.fill_between(x=xs, y1=[-1, -1], y2=[2, 2],
+                                     color=colors["SNII"], zorder=0)
             if "AGB" in sources:
-                agb_color = self.colors["AGB"]
+                agb_color = colors["AGB"]
             else:
                 agb_color = "white"
-            ax.fill_between(x=xs, y1=[-1, -1], y2=[2, -1],
-                            color=agb_color, zorder=1)
+            self.ax.fill_between(x=xs, y1=[-1, -1], y2=[2, -1],
+                                 color=agb_color, zorder=1)
 
             if "BB" in sources:
-                bb_color = self.colors["BB"]
+                bb_color = colors["BB"]
             else:
                 bb_color = "white"
-            ax.fill_between(x=xs, y1=[-1, -1],
-                            y2=box_fraction_line(self.fracs["BB"])(xs),
-                            color=bb_color, zorder=2)
+            self.ax.fill_between(x=xs, y1=[-1, -1],
+                                 y2=box_fraction_line(self.fracs["BB"])(xs),
+                                 color=bb_color, zorder=2)
 
         elif self.symbol == "Li":
             # Fill in the whole thing with CR
             # then cover the bottom (BB + AGB) fraction with BB
             # then cover the bottom BB fraction with BB
             if "CR" in sources:
-                ax.fill_between(x=xs, y1=[-1, -1], y2=[2, 2],
-                                color=self.colors["CR"], zorder=0)
+                self.ax.fill_between(x=xs, y1=[-1, -1], y2=[2, 2],
+                                     color=colors["CR"], zorder=0)
             if "AGB" in sources:
-                agb_color = self.colors["AGB"]
+                agb_color = colors["AGB"]
             else:
                 agb_color = "white"
             total_agb_frac = self.fracs["BB"] + self.fracs["AGB"]
-            ax.fill_between(x=xs, y1=[-1, -1],
-                            y2=box_fraction_line(total_agb_frac)(xs),
-                            color=agb_color, zorder=1)
+            self.ax.fill_between(x=xs, y1=[-1, -1],
+                                 y2=box_fraction_line(total_agb_frac)(xs),
+                                 color=agb_color, zorder=1)
 
             if "BB" in sources:
-                bb_color = self.colors["BB"]
+                bb_color = colors["BB"]
             else:
                 bb_color = "white"
-            ax.fill_between(x=xs, y1=[-1, -1],
-                            y2=box_fraction_line(self.fracs["BB"])(xs),
-                            color=bb_color, zorder=2)
+            self.ax.fill_between(x=xs, y1=[-1, -1],
+                                 y2=box_fraction_line(self.fracs["BB"])(xs),
+                                 color=bb_color, zorder=2)
 
         else:
             # go through the ones on top first
@@ -185,13 +181,14 @@ class Element(object):
 
                 if source in under:
                     if source in sources:
-                        ax.fill_between(x=xs, y1=[-1, -1], y2=[2, 2],
-                                        color=self.colors[source], zorder=0)
+                        self.ax.fill_between(x=xs, y1=[-1, -1], y2=[2, 2],
+                                             color=colors[source],
+                                             zorder=0)
                 else:  # in under
                     if source in sources:
-                        color = self.colors[source]
+                        color = colors[source]
                     else:
                         color = "white"
-                    ax.fill_between(x=xs, y1=[-1, -1],
-                                    y2=box_fraction_line(self.fracs[source])(xs),
-                                    color=color, zorder=1)
+                    self.ax.fill_between(x=xs, y1=[-1, -1],
+                                         y2=box_fraction_line(self.fracs[source])(xs),
+                                         color=color, zorder=1)
