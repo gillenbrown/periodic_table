@@ -83,7 +83,7 @@ def add_labels(fig, sources, highlight):
     if "SNIa" in sources:
         add_single_label(ax_temp, 0, 1, "Exploding White Dwarfs", elts[0].colors["SNIa"], "SNIa"==highlight)
     if "R" in sources:
-        add_single_label(ax_temp, 1, 1, "Exploding Neutron Stars?", elts[0].colors["R"], "R"==highlight)
+        add_single_label(ax_temp, 1, 1, "Merging Neutron Stars?", elts[0].colors["R"], "R"==highlight)
     if "decay" in sources:
         add_single_label(ax_temp, 0, 0, "Nuclear Decay", elts[0].colors["decay"], "decay"==highlight)
     if "unstable" in sources:
@@ -186,8 +186,8 @@ elts = [Element(1,   "H",  1,  1,  frac_bb=1.0),
         Element(90,  "Th", 10, 5,  frac_r=1.0),
         Element(91,  "Pa", 10, 6,  frac_decay=1.0),
         Element(92,  "U",  10, 7,  frac_r=1.0),
-        Element(93,  "Np", 10, 8,  frac_unstable=1.0),
-        Element(94,  "Pu", 10, 9,  frac_unstable=1.0),
+        Element(93,  "Np", 10, 8,  frac_decay=1.0),
+        Element(94,  "Pu", 10, 9,  frac_decay=1.0),
         Element(95,  "Am", 10, 10, frac_unstable=1.0),
         Element(96,  "Cm", 10, 11, frac_unstable=1.0),
         Element(97,  "Bk", 10, 12, frac_unstable=1.0),
