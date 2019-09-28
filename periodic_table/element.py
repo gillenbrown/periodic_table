@@ -28,10 +28,11 @@ def box_fraction_line(frac):
         b = (-2 + np.sqrt(4 - 4 * (1 - 2 * frac))) / 2.0
     else:
         b = (2 - np.sqrt(4 - 4 * (2 * frac - 1))) / 2.0
-    return lambda xs: xs + b
+    return lambda x: max(min(x + b, 1.0), 0.0)
 
 
 class Element(object):
+    fontsize = 30
     def __init__(self, number, symbol, row, column,
                  frac_bb=0.0, frac_cr=0.0,
                  frac_snia=0.0, frac_snii=0.0, frac_agb=0.0,
@@ -55,7 +56,8 @@ class Element(object):
         """
         self.number = number
         self.symbol = symbol
-        self.row = row
+        self.row_flip = row
+        self.row = 11 - row
         self.column = column
 
         self.fracs = {"BB":       frac_bb,
@@ -85,56 +87,85 @@ class Element(object):
                        "unstable": "#CCCCCC"}
         self.colors["AGB"] = self.colors["S"]
 
-    def _get_ax(self, axs_array):
-        return axs_array[self.row][self.column]
+        self.shown = {source:False for source in self.colors}
+        self.fills = dict()
 
-    def box_no_fill(self, axs_array, highlight_source):
-        ax = self._get_ax(axs_array)
-        ax.set_facecolor("w")
-        ax.patch.set_alpha(1.0)
-        # add the borders to the box
-        lw = 5
-        for s in ax.spines.values():
-            s.set_linewidth(lw)
+    def setup(self, ax):
+        highlight_color = "white"
+        self.ax_name_highlight = ax.add_text(x=self.column + 0.5,
+                                             y=self.row + 0.65,
+                                             text=self.symbol,
+                                             coords="data",
+                                             fontsize=self.fontsize,
+                                             color=highlight_color,
+                                             horizontalalignment="center",
+                                             verticalalignment="center",
+                                             zorder=100)
+        self.ax_name_highlight.set_path_effects([PathEffects.withStroke(linewidth=5,
+                                             foreground=bpl.almost_black)])
 
-        fontsize = 30
+        self.ax_name = ax.add_text(x=self.column + 0.5,
+                                   y=self.row + 0.65,
+                                   text=self.symbol,
+                                   coords="data",
+                                   fontsize=self.fontsize,
+                                   horizontalalignment="center",
+                                   verticalalignment="center",
+                                   zorder=100)
 
-        highlight_threshold = 0.5
-        if highlight_source == "":
+        self.ax_num = ax.add_text(x=self.column + 0.5,
+                                  y=self.row + 0.25,
+                                  text=self.number,
+                                  coords="data", fontsize=0.6 * self.fontsize,
+                                  horizontalalignment="center",
+                                  verticalalignment="center")
+
+        self.box = ax.plot([self.column, self.column, self.column+1, self.column+1, self.column],
+                           [self.row, self.row+1, self.row+1, self.row, self.row],
+                           c=bpl.almost_black,
+                           lw=5, zorder=100)
+
+        self.ax_name_highlight.set_alpha(0)
+
+        # # fill the base white
+        # self.white_fill = ax.fill_between(x=[self.column, self.column+1],
+        #                                   y1=self.row,
+        #                                   y2=self.row+1,
+        #                                   color="white", alpha=1.0, zorder=0)
+
+        # then fill the rest
+        self.box_fill(ax)
+
+    def show_source(self, source):
+        self.shown[source] = True
+        try:
+            self.fills[source].set_color(self.colors[source])
+        except KeyError:
+            pass
+
+    def unshow_source(self, source):
+        self.shown[source] = False
+        try:
+            self.fills[source].set_color("w")
+        except KeyError:
+            pass
+
+    def highlight_source(self, source):
+        if source is None:
             highlight = False
-        elif highlight_source == "low mass":
-            highlight = (self.fracs["AGB"] > highlight_threshold
-                         or self.fracs["S"] > highlight_threshold)
         else:
-            highlight = self.fracs[highlight_source] > highlight_threshold
+            highlight_threshold = 0.5
+            if source == "low mass":
+                highlight = (self.fracs["AGB"] > highlight_threshold
+                             or self.fracs["S"] > highlight_threshold)
+            else:
+                highlight = self.fracs[source] > highlight_threshold
 
-        if highlight:
-            highlight_color = "white"
-            txt = ax.add_text(x=0.5, y=0.65, text=self.symbol,
-                              coords="axes", fontsize=fontsize,
-                              color=highlight_color,
-                              horizontalalignment="center",
-                              verticalalignment="center")
-            txt.set_path_effects([PathEffects.withStroke(linewidth=5,
-                                                         foreground=bpl.almost_black)])
+        # True is treated as 1
+        self.ax_name_highlight.set_alpha(1.0*highlight)
+        self.ax_name.set_alpha(1.0 * (not highlight))
 
-        else:
-            ax.add_text(x=0.5, y=0.65, text=self.symbol,
-                        coords="axes", fontsize=fontsize,
-                        horizontalalignment="center",
-                        verticalalignment="center")
-
-        ax.add_text(x=0.5, y=0.25, text=self.number,
-                    coords="axes", fontsize=0.6 * fontsize,
-                    horizontalalignment="center",
-                    verticalalignment="center")
-
-        ax.remove_labels("both")
-
-    def box_fill(self, sources, axs_array, highlight_source=""):
-        # first make the empty cells
-        self.box_no_fill(axs_array, highlight_source)
-
+    def box_fill(self, ax):
         # then add certain sources. Here are the rules:
         # BB: full (except He and Li)
         # CR: full (except Li)
@@ -149,52 +180,38 @@ class Element(object):
         under = ["BB", "CR", "R", "SNII", "manmade"]
         over = ["AGB", "S", "SNIa"]
 
-        ax = self._get_ax(axs_array)
-        xs = [-1, 2]
+        # xs = [-1, 2]
+        n_points = 1000
+        xs = np.linspace(self.column, self.column + 1, n_points)
+        base_xs = np.linspace(0, 1, n_points)
+        base_ys = np.ones(n_points) * self.row
         if self.symbol == "He":
             # Fill the background with SNII, then half of it with AGB,
             # then the normal BB fill
-            if "SNII" in sources:
-                ax.fill_between(x=xs, y1=[-1, -1], y2=[2, 2],
-                                color=self.colors["SNII"], zorder=0)
-            if "AGB" in sources:
-                agb_color = self.colors["AGB"]
-            else:
-                agb_color = "white"
-            ax.fill_between(x=xs, y1=[-1, -1], y2=[2, -1],
-                            color=agb_color, zorder=1)
-
-            if "BB" in sources:
-                bb_color = self.colors["BB"]
-            else:
-                bb_color = "white"
-            ax.fill_between(x=xs, y1=[-1, -1],
-                            y2=box_fraction_line(self.fracs["BB"])(xs),
-                            color=bb_color, zorder=2)
+            self.fills["SNII"] = ax.fill_between(x=xs, y1=base_ys,
+                            y2=base_ys+1, color="w", zorder=1)
+            self.fills["AGB"] = ax.fill_between(x=xs, y1=base_ys,
+                            y2=base_ys + 1.0 - base_xs,
+                            color="w", zorder=2)
+            self.fills["S"] = self.fills["AGB"]
+            self.fills["BB"] = ax.fill_between(x=xs, y1=base_ys,
+                            y2=[self.row + box_fraction_line(self.fracs["BB"])(x) for x in base_xs],
+                            color="w", zorder=3)
 
         elif self.symbol == "Li":
             # Fill in the whole thing with CR
             # then cover the bottom (BB + AGB) fraction with BB
             # then cover the bottom BB fraction with BB
-            if "CR" in sources:
-                ax.fill_between(x=xs, y1=[-1, -1], y2=[2, 2],
-                                color=self.colors["CR"], zorder=0)
-            if "AGB" in sources:
-                agb_color = self.colors["AGB"]
-            else:
-                agb_color = "white"
+            self.fills["CR"] = ax.fill_between(x=xs, y1=base_ys,
+                            y2=base_ys+1,
+                            color="w", zorder=1)
             total_agb_frac = self.fracs["BB"] + self.fracs["AGB"]
-            ax.fill_between(x=xs, y1=[-1, -1],
-                            y2=box_fraction_line(total_agb_frac)(xs),
-                            color=agb_color, zorder=1)
-
-            if "BB" in sources:
-                bb_color = self.colors["BB"]
-            else:
-                bb_color = "white"
-            ax.fill_between(x=xs, y1=[-1, -1],
-                            y2=box_fraction_line(self.fracs["BB"])(xs),
-                            color=bb_color, zorder=2)
+            self.fills["AGB"] = ax.fill_between(x=xs, y1=base_ys,
+                            y2=[self.row + box_fraction_line(total_agb_frac)(x) for x in base_xs],
+                            color="w", zorder=2)
+            self.fills["BB"] = ax.fill_between(x=xs, y1=base_ys,
+                            y2=[self.row + box_fraction_line(self.fracs["BB"])(x) for x in base_xs],
+                            color="w", zorder=3)
 
         else:
             # go through the ones on top first
@@ -203,14 +220,10 @@ class Element(object):
                     continue
 
                 if source in under:
-                    if source in sources:
-                        ax.fill_between(x=xs, y1=[-1, -1], y2=[2, 2],
-                                        color=self.colors[source], zorder=0)
+                    self.fills[source] = ax.fill_between(x=xs, y1=base_ys,
+                                    y2=base_ys+1,
+                                    color="w", zorder=1)
                 else:  # in under
-                    if source in sources:
-                        color = self.colors[source]
-                    else:
-                        color = "white"
-                    ax.fill_between(x=xs, y1=[-1, -1],
-                                    y2=box_fraction_line(self.fracs[source])(xs),
-                                    color=color, zorder=1)
+                    self.fills[source] = ax.fill_between(x=xs, y1=base_ys,
+                                    y2=[self.row + box_fraction_line(self.fracs[source])(x) for x in base_xs],
+                                    color="w", zorder=2)

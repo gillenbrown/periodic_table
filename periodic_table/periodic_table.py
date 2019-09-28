@@ -6,93 +6,16 @@ from .element import Element
 
 bpl.presentation_style()
 
-def _make_blank(fig, axs):
-    # fig.patch.set_alpha(0.0)
+def _make_blank(fig, ax):
+    fig.patch.set_alpha(0.0)
     fig.set_facecolor("white")
 
-    for ax in axs.flatten():
-        ax.remove_labels("both")
-        ax.equal_scale()
-        for s in ax.spines.values():
-            s.set_linewidth(0)
-        ax.patch.set_alpha(0)
-        ax.set_limits(0, 1, 0, 1)
-
-def add_single_label(ax, x_idx, y_idx, text, color, highlight=False):
-    # idx starts from bottom left
-    fontsize = 27
-    
-    spacing = 0.25
-    
-    # X space goes from 3 to 13. 
-    x_0 = 3
-    x_1 = 13
-    width_rect = ((x_1 - x_0) - 3 * spacing) / 2.0
-    
-    # Y space goes from 8 to 11
-    y_0 = 8
-    y_1 = 11
-    height_rect = ((y_1 - y_0) - 4 * spacing) / 4.0
-
-    dx_text = width_rect / 2.0
-    dy_text = height_rect / 2.0
-    
-    x = x_0 + spacing * (x_idx + 1) + width_rect * x_idx
-    y = y_0 + spacing * (y_idx + 1) + height_rect * y_idx
-    
-    if x_idx == 2:  # Make manmade go all the way over
-        width_rect = 5 - spacing
-        # This has to be done now so the position is calculated
-        # properly previously
-    
-    rect = patches.Rectangle((x, y), width_rect, height_rect,
-                             fill=True, facecolor=color,
-                             linewidth=1, edgecolor=bpl.almost_black,
-                             alpha=1.0, zorder=2)
-    ax.add_patch(rect)
-    
-    if highlight:
-        highlight_color = "white" 
-        txt = ax.add_text(x=x+dx_text, y=y+dy_text,
-                          ha="center", va="center", zorder=3,
-                          color=highlight_color,
-                          text=text, fontsize=fontsize)
-        txt.set_path_effects([PathEffects.withStroke(linewidth=4, foreground=bpl.almost_black)])
-    else:        
-        ax.add_text(x=x+dx_text, y=y+dy_text,
-                    ha="center", va="center", zorder=3,
-                    text=text, fontsize=fontsize)
-
-def add_labels(fig, sources, highlight):
-    ax_temp = fig.add_axes([0, 0, 1, 1], projection="bpl")
-    ax_temp.remove_labels("both")
-    for s in ax_temp.spines.values():
+    ax.remove_labels("both")
+    ax.equal_scale()
+    for s in ax.spines.values():
         s.set_linewidth(0)
-    ax_temp.patch.set_alpha(0)
-    ax_temp.set_limits(0, 20, 0, 12)
-    
-    if "BB" in sources:
-        add_single_label(ax_temp, 0, 3, "Big Bang", elts[0].colors["BB"], "BB"==highlight)
-    if "CR" in sources:
-        add_single_label(ax_temp, 1, 3, "Cosmic Ray Spallation", elts[0].colors["CR"], "CR"==highlight)
-    if "S" in sources or "AGB" in sources:
-        highlight_flag = highlight == "AGB" or highlight == "S" or highlight == "low mass"
-        add_single_label(ax_temp, 0, 2, "Low Mass Stars", elts[0].colors["S"], highlight_flag)
-    if "SNII" in sources:
-        add_single_label(ax_temp, 1, 2, "Exploding Massive Stars", elts[0].colors["SNII"], "SNII"==highlight)
-    if "SNIa" in sources:
-        add_single_label(ax_temp, 0, 1, "Exploding White Dwarfs", elts[0].colors["SNIa"], "SNIa"==highlight)
-    if "R" in sources:
-        add_single_label(ax_temp, 1, 1, "Merging Neutron Stars?", elts[0].colors["R"], "R"==highlight)
-    if "decay" in sources:
-        add_single_label(ax_temp, 0, 0, "Nuclear Decay", elts[0].colors["decay"], "decay"==highlight)
-    if "unstable" in sources:
-        add_single_label(ax_temp, 1, 0, "Not Naturally Occurring", elts[0].colors["unstable"], "unstable"==highlight)
-        
-
-    ax_temp.plot([3, 3.6666666, 3.666666, 4], [5.5, 5.5, 2.5, 2.5], lw=4, c=bpl.almost_black)
-    ax_temp.plot([3, 3.3333333, 3.333333, 4], [4.5, 4.5, 1.5, 1.5], lw=4, c=bpl.almost_black)
-
+    ax.patch.set_alpha(0)
+    ax.set_limits(0, 20, 0, 12)
 
 elts = [Element(1,   "H",  1,  1,  frac_bb=1.0),
         Element(2,   "He", 1,  18, frac_bb=0.85, frac_snii=0.075, frac_agb=0.075),
@@ -214,21 +137,166 @@ elts = [Element(1,   "H",  1,  1,  frac_bb=1.0),
         Element(118, "Og", 7,  18, frac_unstable=1.0)
        ]
 
-def make_periodic_table(sources, highlight, savename=None, dpi=300):
-    fig, axs = bpl.subplots(ncols=18+2, nrows=10+2, figsize=[20, 12],
-                            gridspec_kw={"hspace":0, "wspace":0,
-                                         "left": 0, "right": 1,
-                                         "bottom": 0, "top": 1})
+class SourceLabels(object):
+    def __init__(self, ax, x_idx, y_idx, text, color):
 
-    _make_blank(fig, axs)
+        self.shown = False
+        self.highlight = False
+        self.ax = ax
 
-    for elt in elts:
-        elt.box_fill(sources, axs, highlight)
+        # idx starts from bottom left
+        fontsize = 27
 
-    add_labels(fig, sources, highlight)
+        spacing = 0.25
 
-    if savename is not None:
-        fig.savefig(savename, dpi=dpi)
+        # X space goes from 3 to 13.
+        x_0 = 3
+        x_1 = 13
+        width_rect = ((x_1 - x_0) - 3 * spacing) / 2.0
+
+        # Y space goes from 8 to 11
+        y_0 = 8
+        y_1 = 11
+        height_rect = ((y_1 - y_0) - 4 * spacing) / 4.0
+
+        dx_text = width_rect / 2.0
+        dy_text = height_rect / 2.0
+
+        x = x_0 + spacing * (x_idx + 1) + width_rect * x_idx
+        y = y_0 + spacing * (y_idx + 1) + height_rect * y_idx
+
+        if x_idx == 2:  # Make manmade go all the way over
+            width_rect = 5 - spacing
+            # This has to be done now so the position is calculated
+            # properly previously
+
+        rect = patches.Rectangle((x, y), width_rect, height_rect,
+                                 fill=True, facecolor=color,
+                                 linewidth=1, edgecolor=bpl.almost_black,
+                                 alpha=1.0, zorder=2)
+        self.ax.add_patch(rect)
+        self.box = rect
+
+        highlight_color = "white"
+        self.txt_hl = self.ax.add_text(x=x + dx_text, y=y + dy_text,
+                                       ha="center", va="center", zorder=3,
+                                       color=highlight_color,
+                                       text=text, fontsize=fontsize)
+        self.txt_hl.set_path_effects([PathEffects.withStroke(linewidth=4,
+                                                     foreground=bpl.almost_black)])
+        self.txt_hl.set_alpha(0)
+
+        self.txt = self.ax.add_text(x=x + dx_text, y=y + dy_text,
+                                    ha="center", va="center", zorder=3,
+                                    text=text, fontsize=fontsize)
+
+        self.unshow()
+
+    def show(self):
+        self.shown = True
+        self.box.set_alpha(1)
+        if self.highlight:
+            self.highlight_on()
+        else:
+            self.highlight_off()
+
+    def unshow(self):
+        self.shown = False
+        self.box.set_alpha(0)
+        self.txt.set_alpha(0)
+        self.txt_hl.set_alpha(0)
+
+    def highlight_on(self):
+        self.highlight = True
+        if self.shown:
+            self.txt_hl.set_alpha(1)
+            self.txt.set_alpha(0)
+
+    def highlight_off(self):
+        self.highlight = False
+        if self.shown:
+            self.txt_hl.set_alpha(0)
+            self.txt.set_alpha(1)
+
+
+class PeriodicTable(object):
+    def __init__(self):
+        self.fig, self.ax = bpl.subplots(figsize=[20, 12], tight_layout=False,
+                                         gridspec_kw={"hspace":0, "wspace":0,
+                                                      "left": 0, "right": 1,
+                                                      "bottom": 0, "top": 1})
+
+        _make_blank(self.fig, self.ax)
+        # add the lines connecting the Lanthanides and Actinides
+        self.ax.plot([3, 3.6666666, 3.666666, 4], [5.5, 5.5, 2.5, 2.5], lw=4,
+                     c=bpl.almost_black)
+        self.ax.plot([3, 3.3333333, 3.333333, 4], [4.5, 4.5, 1.5, 1.5], lw=4,
+                     c=bpl.almost_black)
+
+        # add the labels
+        self.labels = dict()
+        self.labels["BB"] = SourceLabels(self.ax, 0, 3, "Big Bang", elts[0].colors["BB"])
+        self.labels["CR"] = SourceLabels(self.ax, 1, 3, "Cosmic Ray Spallation", elts[0].colors["CR"])
+        self.labels["S"] = SourceLabels(self.ax, 0, 2, "Low Mass Stars", elts[0].colors["S"])
+        self.labels["AGB"] = self.labels["S"]
+        self.labels["SNII"] = SourceLabels(self.ax, 1, 2, "Exploding Massive Stars", elts[0].colors["SNII"])
+        self.labels["SNIa"] = SourceLabels(self.ax, 0, 1, "Exploding White Dwarfs", elts[0].colors["SNIa"])
+        self.labels["R"] = SourceLabels(self.ax, 1, 1, "Merging Neutron Stars?", elts[0].colors["R"])
+        self.labels["decay"] = SourceLabels(self.ax, 0, 0, "Nuclear Decay", elts[0].colors["decay"])
+        self.labels["unstable"] = SourceLabels(self.ax, 1, 0, "Not Naturally Occurring", elts[0].colors["unstable"])
+
+        for elt in elts:
+            elt.setup(self.ax)
+
+    def highlight(self, source):
+
+        for label in self.labels:
+            if label == source:
+                self.labels[label].highlight_on()
+            else:
+                self.labels[label].highlight_off()
+
+        for elt in elts:
+            elt.highlight_source(source)
+
+    def unhighlight(self):
+        for label in self.labels:
+            self.labels[label].highlight_off()
+
+        for elt in elts:
+            elt.highlight_source(None)
+
+    def show(self, *args):
+        for source in args:
+            if not source in self.labels:
+                raise ValueError("Source {} not correct.".format(source))
+            self.labels[source].show()
+
+        for elt in elts:
+            for source in args:
+                elt.show_source(source)
+
+    def unshow(self, *args):
+        for source in args:
+            if not source in self.labels:
+                raise ValueError("Source {} not correct.".format(source))
+            self.labels[source].unshow()
+
+        for elt in elts:
+            for source in args:
+                elt.unshow_source(source)
+
+    def show_all(self):
+        self.show("BB", "CR", "S", "AGB", "SNII", "SNIa", "R", "decay", "unstable")
+
+    def unshow_all(self):
+        self.unshow("BB", "CR", "S", "AGB", "SNII", "SNIa", "R", "decay",
+                  "unstable")
+
+    # add_labels(fig, sources, highlight)
+    #
+    # if savename is not None:
+    #     fig.savefig(savename, dpi=dpi)
 
 
 #TODO: Finish cleaning up the Element class
