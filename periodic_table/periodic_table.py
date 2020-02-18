@@ -2,20 +2,9 @@ import betterplotlib as bpl
 import matplotlib.patheffects as PathEffects
 import matplotlib.patches as patches
 
-from .element import Element
+from .element import Element, ColorChange
 
 bpl.presentation_style()
-
-def _make_blank(fig, ax):
-    fig.patch.set_alpha(0.0)
-    fig.set_facecolor("white")
-
-    ax.remove_labels("both")
-    ax.equal_scale()
-    for s in ax.spines.values():
-        s.set_linewidth(0)
-    ax.patch.set_alpha(0)
-    ax.set_limits(0, 20, 0, 12)
 
 elts = [Element(1,   "H",  1,  1,  frac_bb=1.0),
         Element(2,   "He", 1,  18, frac_bb=0.85, frac_snii=0.075, frac_agb=0.075),
@@ -175,26 +164,28 @@ class SourceLabels(object):
                                  linewidth=1, edgecolor=bpl.almost_black,
                                  alpha=1.0, zorder=2)
         self.ax.add_patch(rect)
-        self.box = rect
+        self.box = ColorChange(rect)
 
         highlight_color = "white"
-        self.txt_hl = self.ax.add_text(x=x + dx_text, y=y + dy_text,
+        txt_hl = self.ax.add_text(x=x + dx_text, y=y + dy_text,
                                        ha="center", va="center", zorder=3,
                                        color=highlight_color,
                                        text=text, fontsize=fontsize)
-        self.txt_hl.set_path_effects([PathEffects.withStroke(linewidth=4,
+        txt_hl.set_path_effects([PathEffects.withStroke(linewidth=4,
                                                      foreground=bpl.almost_black)])
-        self.txt_hl.set_alpha(0)
+        self.text_hl = ColorChange(txt_hl)
+        self.text_hl.hide()
 
-        self.txt = self.ax.add_text(x=x + dx_text, y=y + dy_text,
+        txt = self.ax.add_text(x=x + dx_text, y=y + dy_text,
                                     ha="center", va="center", zorder=3,
                                     text=text, fontsize=fontsize)
+        self.text = ColorChange(txt)
 
         self.unshow()
 
     def show(self):
         self.shown = True
-        self.box.set_alpha(1)
+        self.box.unhide()
         if self.highlight:
             self.highlight_on()
         else:
@@ -202,101 +193,156 @@ class SourceLabels(object):
 
     def unshow(self):
         self.shown = False
-        self.box.set_alpha(0)
-        self.txt.set_alpha(0)
-        self.txt_hl.set_alpha(0)
+        self.box.hide()
+        self.text.hide()
+        self.text_hl.hide()
 
     def highlight_on(self):
         self.highlight = True
         if self.shown:
-            self.txt_hl.set_alpha(1)
-            self.txt.set_alpha(0)
+            self.text_hl.unhide()
+            self.text.hide()
 
     def highlight_off(self):
         self.highlight = False
         if self.shown:
-            self.txt_hl.set_alpha(0)
-            self.txt.set_alpha(1)
+            self.text_hl.hide()
+            self.text.unhide()
 
+    def fade(self):
+        self.text_hl.fade()
+        self.text.fade()
+        self.box.fade()
+
+    def unfade(self):
+        self.text_hl.unfade()
+        self.text.unfade()
+        self.box.unfade()
 
 class PeriodicTable(object):
     def __init__(self):
-        self.fig, self.ax = bpl.subplots(figsize=[20, 12], tight_layout=False,
-                                         gridspec_kw={"hspace":0, "wspace":0,
-                                                      "left": 0, "right": 1,
-                                                      "bottom": 0, "top": 1})
+        self.__elts = elts
+        fig, ax = bpl.subplots(figsize=[20, 12], tight_layout=False,
+                               gridspec_kw={"hspace":0, "wspace":0,
+                                            "left": 0, "right": 1,
+                                            "bottom": 0, "top": 1})
 
-        _make_blank(self.fig, self.ax)
+        self._fig = fig
+        self._ax = ax
+
+        self._fig.patch.set_alpha(0.0)
+        self._fig.set_facecolor("white")
+
+        self._ax.remove_labels("both")
+        self._ax.equal_scale()
+        for s in self._ax.spines.values():
+            s.set_linewidth(0)
+        self._ax.patch.set_alpha(0)
+        self._ax.set_limits(0, 20, 0, 12)
+
         # add the lines connecting the Lanthanides and Actinides
-        self.ax.plot([3, 3.6666666, 3.666666, 4], [5.5, 5.5, 2.5, 2.5], lw=4,
-                     c=bpl.almost_black)
-        self.ax.plot([3, 3.3333333, 3.333333, 4], [4.5, 4.5, 1.5, 1.5], lw=4,
-                     c=bpl.almost_black)
+        l1 = self._ax.plot([3, 3.6666666, 3.666666, 4], [5.5, 5.5, 2.5, 2.5], lw=4,
+                          c=bpl.almost_black, zorder=-1000)
+        l2 = self._ax.plot([3, 3.3333333, 3.333333, 4], [4.5, 4.5, 1.5, 1.5], lw=4,
+                          c=bpl.almost_black, zorder=-1000)
+        self._connector_lines = [ColorChange(segment) for segment in l1 + l2]
 
         # add the labels
         self.labels = dict()
-        self.labels["BB"] = SourceLabels(self.ax, 0, 3, "Big Bang", elts[0].colors["BB"])
-        self.labels["CR"] = SourceLabels(self.ax, 1, 3, "Cosmic Ray Spallation", elts[0].colors["CR"])
-        self.labels["S"] = SourceLabels(self.ax, 0, 2, "Low Mass Stars", elts[0].colors["S"])
-        self.labels["AGB"] = self.labels["S"]
-        self.labels["SNII"] = SourceLabels(self.ax, 1, 2, "Exploding Massive Stars", elts[0].colors["SNII"])
-        self.labels["SNIa"] = SourceLabels(self.ax, 0, 1, "Exploding White Dwarfs", elts[0].colors["SNIa"])
-        self.labels["R"] = SourceLabels(self.ax, 1, 1, "Merging Neutron Stars?", elts[0].colors["R"])
-        self.labels["decay"] = SourceLabels(self.ax, 0, 0, "Nuclear Decay", elts[0].colors["decay"])
-        self.labels["unstable"] = SourceLabels(self.ax, 1, 0, "Not Naturally Occurring", elts[0].colors["unstable"])
+        self.labels["bb"] = SourceLabels(self._ax, 0, 3, "Big Bang", elts[0].colors["BB"])
+        self.labels["cr"] = SourceLabels(self._ax, 1, 3, "Cosmic Ray Spallation", elts[0].colors["CR"])
+        self.labels["s"] = SourceLabels(self._ax, 0, 2, "Low Mass Stars", elts[0].colors["S"])
+        self.labels["agb"] = self.labels["s"]
+        self.labels["snii"] = SourceLabels(self._ax, 1, 2, "Exploding Massive Stars", elts[0].colors["SNII"])
+        self.labels["snia"] = SourceLabels(self._ax, 0, 1, "Exploding White Dwarfs", elts[0].colors["SNIa"])
+        self.labels["r"] = SourceLabels(self._ax, 1, 1, "Merging Neutron Stars?", elts[0].colors["R"])
+        self.labels["decay"] = SourceLabels(self._ax, 0, 0, "Nuclear Decay", elts[0].colors["decay"])
+        self.labels["unstable"] = SourceLabels(self._ax, 1, 0, "Not Naturally Occurring", elts[0].colors["unstable"])
 
         for elt in elts:
-            elt.setup(self.ax)
+            elt.setup(self._ax)
 
-    def highlight(self, source):
-
+    def highlight_source(self, source):
         for label in self.labels:
-            if label == source:
+            if label == source.lower():
                 self.labels[label].highlight_on()
             else:
                 self.labels[label].highlight_off()
 
         for elt in elts:
-            elt.highlight_source(source)
+            elt.highlight_source(source.lower())
 
-    def unhighlight(self):
+    def unhighlight_all_sources(self):
         for label in self.labels:
             self.labels[label].highlight_off()
 
         for elt in elts:
             elt.highlight_source(None)
 
-    def show(self, *args):
-        for source in args:
+    def show_source(self, *args):
+        sources = [item.lower() for item in args]
+        for source in sources:
             if not source in self.labels:
                 raise ValueError("Source {} not correct.".format(source))
             self.labels[source].show()
 
         for elt in elts:
-            for source in args:
+            for source in sources:
                 elt.show_source(source)
 
-    def unshow(self, *args):
-        for source in args:
+    def unshow_source(self, *args):
+        sources = [item.lower() for item in args]
+        for source in sources:
             if not source in self.labels:
                 raise ValueError("Source {} not correct.".format(source))
             self.labels[source].unshow()
 
         for elt in elts:
-            for source in args:
+            for source in sources:
                 elt.unshow_source(source)
 
-    def show_all(self):
-        self.show("BB", "CR", "S", "AGB", "SNII", "SNIa", "R", "decay", "unstable")
+    def show_all_sources(self):
+        self.show_source("BB", "CR", "S", "AGB", "SNII", "SNIa", "R", "decay",
+                         "unstable")
 
-    def unshow_all(self):
-        self.unshow("BB", "CR", "S", "AGB", "SNII", "SNIa", "R", "decay",
-                  "unstable")
+    def unshow_all_sources(self):
+        self.unshow_source("BB", "CR", "S", "AGB", "SNII", "SNIa", "R", "decay",
+                           "unstable")
 
-    # add_labels(fig, sources, highlight)
-    #
-    # if savename is not None:
-    #     fig.savefig(savename, dpi=dpi)
+    def isolate_elt(self, *args, keep_labels=True):
+
+        for l in self._connector_lines:
+            l.fade()
+
+        if keep_labels:
+            for label in self.labels:
+                fade_this = True
+                for elt in elts:
+                    if elt.symbol in args and elt.highlight_bool(label):
+                        fade_this = False
+                if fade_this:
+                    self.labels[label].fade()
+                else:
+                    self.labels[label].unfade()
+
+        for elt in elts:
+            if elt.symbol not in args:
+                elt.fade()
+            else:
+                elt.unfade()
+
+    def unisolate_all_elts(self):
+        for l in self._connector_lines:
+            l.unfade()
+
+        for label in self.labels.values():
+            label.unfade()
+
+        for elt in elts:
+            elt.unfade()
+
+    def save(self, savename):
+        self._fig.savefig(savename)
 
 
 #TODO: Finish cleaning up the Element class
@@ -304,14 +350,13 @@ class PeriodicTable(object):
 #TODO: put the colors in the Periodic Table class, since that's where they
 #      really belong
 #TODO: Clean up the naming convention on things, especially the highlighting
-#TODO: make the main plotting function cleaner, especially in how the
-#      syntax for telling which sources to plot works
 #TODO: maybe make AGB separate from S-process in the legend? C and N are unique
-#TODO: instead of filling things in with white, have the code do the fill
-#      above the 1-frac line. This only works for things with 2 sources, though
 #TODO: have a check that all elements other than He and Li are only two sources
 #      at most.
 #TODO: add description to GitHub page
 #TODO: allow user to customize names
 #TODO: allow user to customize background color (none or white, at least)
 #TODO: add multiple color schemes - pretty or visually distinct
+#TODO: redo fractions! Removing the lines on the fill-between messed up the
+#      fractions
+#TODO: add alternate names for the sources

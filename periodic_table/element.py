@@ -1,6 +1,94 @@
 import numpy as np
 import matplotlib.patheffects as PathEffects
+from matplotlib import colors as mpl_colors
 import betterplotlib as bpl
+
+class ColorChange(object):
+    """Plot item that can have its color changed to be paler, or totally hidden
+    from view."""
+    def __init__(self, plot_item, fade_zorder_change=-10):
+        self.faded = False
+        self.hidden = False
+        self.fade_zorder_change = fade_zorder_change
+
+        self.plot_item = plot_item
+
+        try:
+            self.get_color = self.plot_item.get_color
+            self._set_color_base = self.plot_item.set_color
+        except AttributeError:
+            # for facecolor the thing it returns is a different format, so
+            # we have to parse it to make it play nice with the other functions.
+            # It also depends on what kind of thing we have, strangely
+            if len(self.plot_item.get_facecolor()) == 1:
+                # This returns an array with an array of an RGBA tuple. We extract
+                # the inner array and ignore alpha
+                self.get_color = lambda: self.plot_item.get_facecolor()[0][0:3]
+            elif len(self.plot_item.get_facecolor()) == 4:
+                # here there is no outer array, so we just ignore alpha
+                self.get_color = lambda: self.plot_item.get_facecolor()[0:3]
+
+            self._set_color_base = self.plot_item.set_facecolor
+
+        self.get_alpha = self.plot_item.get_alpha
+        self.set_alpha = self.plot_item.set_alpha
+        self.original_alpha = self.get_alpha()
+        self.hidden_alpha = 0
+
+        self.get_zorder = self.plot_item.get_zorder
+        self.set_zorder = self.plot_item.set_zorder
+
+        self._set_internal_colors()
+        self._set_internal_zorder()
+
+
+    def _set_internal_colors(self):
+        self.original_color = self.get_color()
+        self.faded_color = bpl.fade_color(self.original_color)
+
+    def _set_internal_zorder(self):
+        self.original_zorder = self.get_zorder()
+        self.faded_zorder = self.original_zorder + self.fade_zorder_change
+
+    def fade(self):
+        if not self.faded:  # don't do anything if already faded
+            self._set_internal_colors()
+            self._set_internal_zorder()
+            self.faded = True
+            self._set_color_base(self.faded_color)
+
+            self.set_zorder(self.faded_zorder)
+
+
+    def unfade(self):
+        if self.faded:  # if not currently faded, this does nothing
+            self.faded = False
+            self._set_color_base(self.original_color)
+            self.set_zorder(self.original_zorder)
+
+    def hide(self):
+        if not self.hidden:  # don't do anything if already hidden
+            self.hidden = True
+            self.original_alpha = self.get_alpha()
+            self.set_alpha(self.hidden_alpha)
+
+    def unhide(self):
+        if self.hidden:  # if not currently hidden, this does nothing
+            self.hidden = False
+            self.set_alpha(self.original_alpha)
+
+    def set_color(self, color):
+        """This function can be used to set the color of the object. If the
+        object is currently faded the color will be set with the faded version
+        of the color supplied, with the original color stored and ready to be
+        be applied later."""
+        self.original_color = color
+        self.faded_color = bpl.fade_color(color)
+        if self.faded:
+            self._set_color_base(self.faded_color)
+        else:
+            self._set_color_base(self.original_color)
+
 
 def box_fraction_line(frac):
     """
@@ -60,6 +148,9 @@ class Element(object):
         self.row = 11 - row
         self.column = column
 
+        self.hidden = False
+        self.highlight = False
+
         self.fracs = {"BB":       frac_bb,
                       "CR":       frac_cr,
                       "SNII":     frac_snii,
@@ -92,46 +183,52 @@ class Element(object):
 
     def setup(self, ax):
         highlight_color = "white"
-        self.ax_name_highlight = ax.add_text(x=self.column + 0.5,
-                                             y=self.row + 0.65,
-                                             text=self.symbol,
-                                             coords="data",
-                                             fontsize=self.fontsize,
-                                             color=highlight_color,
-                                             horizontalalignment="center",
-                                             verticalalignment="center",
-                                             zorder=100)
-        self.ax_name_highlight.set_path_effects([PathEffects.withStroke(linewidth=5,
+        highlight_text = ax.add_text(x=self.column + 0.5,
+                                     y=self.row + 0.65,
+                                     text=self.symbol,
+                                     coords="data",
+                                     fontsize=self.fontsize,
+                                     color=highlight_color,
+                                     horizontalalignment="center",
+                                     verticalalignment="center",
+                                     zorder=100)
+        highlight_text.set_path_effects([PathEffects.withStroke(linewidth=5,
                                              foreground=bpl.almost_black)])
+        self.ax_name_highlight = ColorChange(highlight_text)
 
-        self.ax_name = ax.add_text(x=self.column + 0.5,
-                                   y=self.row + 0.65,
-                                   text=self.symbol,
-                                   coords="data",
-                                   fontsize=self.fontsize,
-                                   horizontalalignment="center",
-                                   verticalalignment="center",
-                                   zorder=100)
+        name = ax.add_text(x=self.column + 0.5,
+                           y=self.row + 0.65,
+                           text=self.symbol,
+                           coords="data",
+                           color=bpl.almost_black,
+                           fontsize=self.fontsize,
+                           horizontalalignment="center",
+                           verticalalignment="center",
+                           zorder=100)
+        self.ax_name = ColorChange(name)
 
-        self.ax_num = ax.add_text(x=self.column + 0.5,
-                                  y=self.row + 0.25,
-                                  text=self.number,
-                                  coords="data", fontsize=0.6 * self.fontsize,
-                                  horizontalalignment="center",
-                                  verticalalignment="center")
+        num = ax.add_text(x=self.column + 0.5,
+                          y=self.row + 0.25,
+                          text=self.number,
+                          color=bpl.almost_black,
+                          coords="data", fontsize=0.6 * self.fontsize,
+                          horizontalalignment="center",
+                          verticalalignment="center")
+        self.ax_num = ColorChange(num)
 
-        self.box = ax.plot([self.column, self.column, self.column+1, self.column+1, self.column],
-                           [self.row, self.row+1, self.row+1, self.row, self.row],
-                           c=bpl.almost_black,
-                           lw=5, zorder=100)
+        box = ax.plot([self.column, self.column, self.column+1, self.column+1, self.column],
+                      [self.row, self.row+1, self.row+1, self.row, self.row],
+                      c=bpl.almost_black,
+                      lw=5, zorder=100)
+        self.box_list = [ColorChange(segment) for segment in box]
 
-        self.ax_name_highlight.set_alpha(0)
+        self.ax_name_highlight.hide()
 
-        # # fill the base white
+        # # fill the base white, will be used to highlight
         # self.white_fill = ax.fill_between(x=[self.column, self.column+1],
         #                                   y1=self.row,
         #                                   y2=self.row+1,
-        #                                   color="white", alpha=1.0, zorder=0)
+        #                                   color="white", alpha=0.5, zorder=-100)
 
         # then fill the rest
         self.box_fill(ax)
@@ -140,30 +237,58 @@ class Element(object):
         self.shown[source] = True
         try:
             self.fills[source].set_color(self.colors[source])
-        except KeyError:
+        except KeyError:   # this source isn't present
             pass
 
     def unshow_source(self, source):
         self.shown[source] = False
         try:
             self.fills[source].set_color("w")
-        except KeyError:
+        except KeyError:  # this source isn't present
             pass
 
-    def highlight_source(self, source):
+    def highlight_bool(self, source):
         if source is None:
-            highlight = False
+            return False
         else:
             highlight_threshold = 0.5
             if source == "low mass":
-                highlight = (self.fracs["AGB"] > highlight_threshold
-                             or self.fracs["S"] > highlight_threshold)
+                return (self.fracs["AGB"] > highlight_threshold
+                        or self.fracs["S"] > highlight_threshold)
             else:
-                highlight = self.fracs[source] > highlight_threshold
+                return self.fracs[source] > highlight_threshold
 
-        # True is treated as 1
-        self.ax_name_highlight.set_alpha(1.0*highlight)
-        self.ax_name.set_alpha(1.0 * (not highlight))
+    def highlight_source(self, source):
+        if self.highlight_bool(source):
+            self.ax_name_highlight.unhide()
+            self.ax_name.hide()
+        else:
+            self.ax_name_highlight.hide()
+            self.ax_name.unhide()
+
+        self.highlight = self.highlight_bool(source)
+
+    def fade(self):
+        self.faded = True
+        for segment in self.box_list:
+            segment.fade()
+        self.ax_name_highlight.fade()
+        self.ax_name.fade()
+        self.ax_num.fade()
+
+        for fill in self.fills.values():
+            fill.fade()
+
+    def unfade(self):
+        self.faded = False
+        for segment in self.box_list:
+            segment.unfade()
+        self.ax_name_highlight.unfade()
+        self.ax_name.unfade()
+        self.ax_num.unfade()
+
+        for fill in self.fills.values():
+            fill.unfade()
 
     def box_fill(self, ax):
         # then add certain sources. Here are the rules:
@@ -188,30 +313,40 @@ class Element(object):
         if self.symbol == "He":
             # Fill the background with SNII, then half of it with AGB,
             # then the normal BB fill
-            self.fills["SNII"] = ax.fill_between(x=xs, y1=base_ys,
-                            y2=base_ys+1, color="w", zorder=1)
-            self.fills["AGB"] = ax.fill_between(x=xs, y1=base_ys,
-                            y2=base_ys + 1.0 - base_xs,
-                            color="w", zorder=2)
-            self.fills["S"] = self.fills["AGB"]
-            self.fills["BB"] = ax.fill_between(x=xs, y1=base_ys,
+            snii = ax.fill_between(x=xs, y1=base_ys,
+                            y2=base_ys+1, color="w", lw=0, zorder=1)
+            agb = ax.fill_between(x=xs, y1=base_ys,
+                                  y2=base_ys + 1.0 - base_xs,
+                                  lw=0,
+                                  color="w", zorder=2)
+            bb = ax.fill_between(x=xs, y1=base_ys,
                             y2=[self.row + box_fraction_line(self.fracs["BB"])(x) for x in base_xs],
+                                 lw=0,
                             color="w", zorder=3)
+
+            self.fills["SNII"] = ColorChange(snii)
+            self.fills["AGB"] = ColorChange(agb)
+            self.fills["BB"] = ColorChange(bb)
+            self.fills["S"] = self.fills["AGB"]
 
         elif self.symbol == "Li":
             # Fill in the whole thing with CR
             # then cover the bottom (BB + AGB) fraction with BB
             # then cover the bottom BB fraction with BB
-            self.fills["CR"] = ax.fill_between(x=xs, y1=base_ys,
+            cr = ax.fill_between(x=xs, y1=base_ys,
                             y2=base_ys+1,
-                            color="w", zorder=1)
+                                 lw=0, color="w", zorder=1)
             total_agb_frac = self.fracs["BB"] + self.fracs["AGB"]
-            self.fills["AGB"] = ax.fill_between(x=xs, y1=base_ys,
+            agb = ax.fill_between(x=xs, y1=base_ys,
                             y2=[self.row + box_fraction_line(total_agb_frac)(x) for x in base_xs],
-                            color="w", zorder=2)
-            self.fills["BB"] = ax.fill_between(x=xs, y1=base_ys,
+                                  lw=0, color="w", zorder=2)
+            bb = ax.fill_between(x=xs, y1=base_ys,
                             y2=[self.row + box_fraction_line(self.fracs["BB"])(x) for x in base_xs],
-                            color="w", zorder=3)
+                                 lw=0, color="w", zorder=3)
+
+            self.fills["CR"] = ColorChange(cr)
+            self.fills["AGB"] = ColorChange(agb)
+            self.fills["BB"] = ColorChange(bb)
 
         else:
             # go through the ones on top first
@@ -220,10 +355,12 @@ class Element(object):
                     continue
 
                 if source in under:
-                    self.fills[source] = ax.fill_between(x=xs, y1=base_ys,
+                    fill = ax.fill_between(x=xs, y1=base_ys,
                                     y2=base_ys+1,
-                                    color="w", zorder=1)
+                                           lw=0, color="w", zorder=1)
+                    self.fills[source] = ColorChange(fill)
                 else:  # in under
-                    self.fills[source] = ax.fill_between(x=xs, y1=base_ys,
+                    fill = ax.fill_between(x=xs, y1=base_ys,
                                     y2=[self.row + box_fraction_line(self.fracs[source])(x) for x in base_xs],
-                                    color="w", zorder=2)
+                                           lw=0, color="w", zorder=2)
+                    self.fills[source] = ColorChange(fill)
