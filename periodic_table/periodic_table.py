@@ -365,3 +365,4 @@ class PeriodicTable(object):
 #      fractions
 #TODO: add alternate names for the sources
 #TODO: make sure the outer border for the source names gets faded when needed
+#TODO: document functions
