@@ -151,13 +151,13 @@ class Element(object):
         self.hidden = False
         self.highlight = False
 
-        self.fracs = {"BB":       frac_bb,
-                      "CR":       frac_cr,
-                      "SNII":     frac_snii,
-                      "SNIa":     frac_snia,
-                      "AGB":      frac_agb,
-                      "S":        frac_s,
-                      "R":        frac_r,
+        self.fracs = {"bb":       frac_bb,
+                      "cr":       frac_cr,
+                      "snii":     frac_snii,
+                      "snia":     frac_snia,
+                      "agb":      frac_agb,
+                      "s":        frac_s,
+                      "r":        frac_r,
                       "decay":    frac_decay,
                       "unstable": frac_unstable}
 
@@ -168,15 +168,15 @@ class Element(object):
             if frac < 0 or frac > 1:
                 raise ValueError("Fractions must be between 0 and 1.")
 
-        self.colors = {"BB":       "#D7E5CC",
-                       "CR":       "#C3DDFA",
-                       "SNIa":     "#fe9443",
-                       "SNII":     "#FEE844",
-                       "R":        "#AFBF75",
-                       "S":        "#73A0CC",
+        self.colors = {"bb":       "#D7E5CC",
+                       "cr":       "#C3DDFA",
+                       "snia":     "#fe9443",
+                       "snii":     "#FEE844",
+                       "r":        "#AFBF75",
+                       "s":        "#73A0CC",
                        "decay":    "#DDCCDD",
                        "unstable": "#CCCCCC"}
-        self.colors["AGB"] = self.colors["S"]
+        self.colors["agb"] = self.colors["s"]
 
         self.shown = {source:False for source in self.colors}
         self.fills = dict()
@@ -302,8 +302,8 @@ class Element(object):
         # Elements in the top can be done by filling the whole thing, then
         # filling the rest with the color of the rest (either white or the
         # actual color)
-        under = ["BB", "CR", "R", "SNII", "manmade"]
-        over = ["AGB", "S", "SNIa"]
+        under = ["bb", "cr", "r", "snii", "manmade"]
+        over = ["agb", "s", "snia"]
 
         # xs = [-1, 2]
         n_points = 1000
@@ -320,14 +320,14 @@ class Element(object):
                                   lw=0,
                                   color="w", zorder=2)
             bb = ax.fill_between(x=xs, y1=base_ys,
-                            y2=[self.row + box_fraction_line(self.fracs["BB"])(x) for x in base_xs],
+                            y2=[self.row + box_fraction_line(self.fracs["bb"])(x) for x in base_xs],
                                  lw=0,
                             color="w", zorder=3)
 
-            self.fills["SNII"] = ColorChange(snii)
-            self.fills["AGB"] = ColorChange(agb)
-            self.fills["BB"] = ColorChange(bb)
-            self.fills["S"] = self.fills["AGB"]
+            self.fills["snii"] = ColorChange(snii)
+            self.fills["agb"] = ColorChange(agb)
+            self.fills["bb"] = ColorChange(bb)
+            self.fills["s"] = self.fills["agb"]
 
         elif self.symbol == "Li":
             # Fill in the whole thing with CR
@@ -336,17 +336,17 @@ class Element(object):
             cr = ax.fill_between(x=xs, y1=base_ys,
                             y2=base_ys+1,
                                  lw=0, color="w", zorder=1)
-            total_agb_frac = self.fracs["BB"] + self.fracs["AGB"]
+            total_agb_frac = self.fracs["bb"] + self.fracs["agb"]
             agb = ax.fill_between(x=xs, y1=base_ys,
                             y2=[self.row + box_fraction_line(total_agb_frac)(x) for x in base_xs],
                                   lw=0, color="w", zorder=2)
             bb = ax.fill_between(x=xs, y1=base_ys,
-                            y2=[self.row + box_fraction_line(self.fracs["BB"])(x) for x in base_xs],
+                            y2=[self.row + box_fraction_line(self.fracs["bb"])(x) for x in base_xs],
                                  lw=0, color="w", zorder=3)
 
-            self.fills["CR"] = ColorChange(cr)
-            self.fills["AGB"] = ColorChange(agb)
-            self.fills["BB"] = ColorChange(bb)
+            self.fills["cr"] = ColorChange(cr)
+            self.fills["agb"] = ColorChange(agb)
+            self.fills["bb"] = ColorChange(bb)
 
         else:
             # go through the ones on top first

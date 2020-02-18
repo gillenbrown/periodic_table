@@ -248,33 +248,33 @@ class PeriodicTable(object):
         self._connector_lines = [ColorChange(segment) for segment in l1 + l2]
 
         # add the labels
-        self.labels = dict()
-        self.labels["bb"] = SourceLabels(self._ax, 0, 3, "Big Bang", elts[0].colors["BB"])
-        self.labels["cr"] = SourceLabels(self._ax, 1, 3, "Cosmic Ray Spallation", elts[0].colors["CR"])
-        self.labels["s"] = SourceLabels(self._ax, 0, 2, "Low Mass Stars", elts[0].colors["S"])
-        self.labels["agb"] = self.labels["s"]
-        self.labels["snii"] = SourceLabels(self._ax, 1, 2, "Exploding Massive Stars", elts[0].colors["SNII"])
-        self.labels["snia"] = SourceLabels(self._ax, 0, 1, "Exploding White Dwarfs", elts[0].colors["SNIa"])
-        self.labels["r"] = SourceLabels(self._ax, 1, 1, "Merging Neutron Stars?", elts[0].colors["R"])
-        self.labels["decay"] = SourceLabels(self._ax, 0, 0, "Nuclear Decay", elts[0].colors["decay"])
-        self.labels["unstable"] = SourceLabels(self._ax, 1, 0, "Not Naturally Occurring", elts[0].colors["unstable"])
+        self._labels = dict()
+        self._labels["bb"] = SourceLabels(self._ax, 0, 3, "Big Bang", elts[0].colors["bb"])
+        self._labels["cr"] = SourceLabels(self._ax, 1, 3, "Cosmic Ray Spallation", elts[0].colors["cr"])
+        self._labels["s"] = SourceLabels(self._ax, 0, 2, "Low Mass Stars", elts[0].colors["s"])
+        self._labels["agb"] = self._labels["s"]
+        self._labels["snii"] = SourceLabels(self._ax, 1, 2, "Exploding Massive Stars", elts[0].colors["snii"])
+        self._labels["snia"] = SourceLabels(self._ax, 0, 1, "Exploding White Dwarfs", elts[0].colors["snia"])
+        self._labels["r"] = SourceLabels(self._ax, 1, 1, "Merging Neutron Stars?", elts[0].colors["r"])
+        self._labels["decay"] = SourceLabels(self._ax, 0, 0, "Nuclear Decay", elts[0].colors["decay"])
+        self._labels["unstable"] = SourceLabels(self._ax, 1, 0, "Not Naturally Occurring", elts[0].colors["unstable"])
 
         for elt in elts:
             elt.setup(self._ax)
 
     def highlight_source(self, source):
-        for label in self.labels:
+        for label in self._labels:
             if label == source.lower():
-                self.labels[label].highlight_on()
+                self._labels[label].highlight_on()
             else:
-                self.labels[label].highlight_off()
+                self._labels[label].highlight_off()
 
         for elt in elts:
             elt.highlight_source(source.lower())
 
     def unhighlight_all_sources(self):
-        for label in self.labels:
-            self.labels[label].highlight_off()
+        for label in self._labels:
+            self._labels[label].highlight_off()
 
         for elt in elts:
             elt.highlight_source(None)
@@ -282,9 +282,9 @@ class PeriodicTable(object):
     def show_source(self, *args):
         sources = [item.lower() for item in args]
         for source in sources:
-            if not source in self.labels:
+            if not source in self._labels:
                 raise ValueError("Source {} not correct.".format(source))
-            self.labels[source].show()
+            self._labels[source].show()
 
         for elt in elts:
             for source in sources:
@@ -293,20 +293,20 @@ class PeriodicTable(object):
     def unshow_source(self, *args):
         sources = [item.lower() for item in args]
         for source in sources:
-            if not source in self.labels:
+            if not source in self._labels:
                 raise ValueError("Source {} not correct.".format(source))
-            self.labels[source].unshow()
+            self._labels[source].unshow()
 
         for elt in elts:
             for source in sources:
                 elt.unshow_source(source)
 
     def show_all_sources(self):
-        self.show_source("BB", "CR", "S", "AGB", "SNII", "SNIa", "R", "decay",
+        self.show_source("bb", "cr", "s", "agb", "snii", "snia", "r", "decay",
                          "unstable")
 
     def unshow_all_sources(self):
-        self.unshow_source("BB", "CR", "S", "AGB", "SNII", "SNIa", "R", "decay",
+        self.unshow_source("bb", "cr", "s", "agb", "snii", "snia", "r", "decay",
                            "unstable")
 
     def isolate_elt(self, *args, keep_labels=True):
@@ -315,15 +315,15 @@ class PeriodicTable(object):
             l.fade()
 
         if keep_labels:
-            for label in self.labels:
+            for label in self._labels:
                 fade_this = True
                 for elt in elts:
                     if elt.symbol in args and elt.highlight_bool(label):
                         fade_this = False
                 if fade_this:
-                    self.labels[label].fade()
+                    self._labels[label].fade()
                 else:
-                    self.labels[label].unfade()
+                    self._labels[label].unfade()
 
         for elt in elts:
             if elt.symbol not in args:
@@ -335,7 +335,7 @@ class PeriodicTable(object):
         for l in self._connector_lines:
             l.unfade()
 
-        for label in self.labels.values():
+        for label in self._labels.values():
             label.unfade()
 
         for elt in elts:
@@ -343,6 +343,10 @@ class PeriodicTable(object):
 
     def save(self, savename):
         self._fig.savefig(savename)
+
+    def get_figure(self):
+        # for use in notebooks
+        return self._fig
 
 
 #TODO: Finish cleaning up the Element class
@@ -360,3 +364,4 @@ class PeriodicTable(object):
 #TODO: redo fractions! Removing the lines on the fill-between messed up the
 #      fractions
 #TODO: add alternate names for the sources
+#TODO: make sure the outer border for the source names gets faded when needed
