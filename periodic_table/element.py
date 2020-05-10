@@ -419,8 +419,8 @@ class Element(object):
             # low mass has a special check
             if source == "low mass":
                 return (
-                    self.fracs["AGB"] > highlight_threshold
-                    or self.fracs["S"] > highlight_threshold
+                    self.fracs["agb"] > highlight_threshold
+                    or self.fracs["s"] > highlight_threshold
                 )
             else:
                 return self.fracs[source] > highlight_threshold

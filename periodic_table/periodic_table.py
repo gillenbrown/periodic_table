@@ -434,7 +434,13 @@ class PeriodicTable(object):
         """
         # Check all the labels
         for label in self._labels:
-            if label == source.lower():
+            # low mass is a separate thing
+            if source == "low mass":
+                label_source = "agb"
+            else:
+                label_source = source
+            # then actually do the checking
+            if label == label_source.lower():
                 self._labels[label].highlight_on()
             else:
                 self._labels[label].highlight_off()
