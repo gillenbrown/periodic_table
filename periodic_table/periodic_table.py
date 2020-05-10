@@ -507,9 +507,6 @@ class PeriodicTable(object):
         return self._fig
 
 
-#TODO: maybe make AGB separate from S-process in the legend? C and N are unique
-#TODO: have a check that all elements other than He and Li are only two sources
-#      at most.
 #TODO: add description to GitHub page
 #TODO: allow user to customize names
 #TODO: allow user to customize background color (none or white, at least)

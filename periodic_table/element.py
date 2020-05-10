@@ -214,6 +214,14 @@ class Element(object):
         for frac in self.fracs.values():
             if frac < 0 or frac > 1:
                 raise ValueError("Fractions must be between 0 and 1.")
+        # also check that only Li and He are ones with more then 2 elements
+        nonzero_sources = 0
+        for frac in self.fracs.values():
+            if frac > 0:
+                nonzero_sources += 1
+        if nonzero_sources > 2 and self.symbol not in ["He", "Li"]:
+            raise ValueError("Element {} has more then 2 sources.".format(self.symbol) +
+                             "This is not yet implemented")
 
         # None of the sources will be initially shown on the table.
         self.shown = {source:False for source in self.colors}
