@@ -4,7 +4,7 @@ import matplotlib.patches as patches
 
 from .element import Element, ColorChange
 
-bpl.presentation_style()
+bpl.set_style()
 
 elts = [Element(1,   "H",  1,  1,  frac_bb=1.0),
         Element(2,   "He", 1,  18, frac_bb=0.85, frac_snii=0.075, frac_agb=0.075),
@@ -318,7 +318,7 @@ class PeriodicTable(object):
             for label in self._labels:
                 fade_this = True
                 for elt in elts:
-                    if elt.symbol in args and elt.highlight_bool(label):
+                    if elt.symbol in args and elt._highlight_bool(label):
                         fade_this = False
                 if fade_this:
                     self._labels[label].fade()
@@ -366,3 +366,5 @@ class PeriodicTable(object):
 #TODO: add alternate names for the sources
 #TODO: make sure the outer border for the source names gets faded when needed
 #TODO: document functions
+#TODO: make sure that unshow doesn't hide low mass label if one of AGB or S is hidden,
+#      but not both
