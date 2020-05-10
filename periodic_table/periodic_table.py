@@ -127,45 +127,69 @@ elts = [Element(1,   "H",  1,  1,  frac_bb=1.0),
        ]
 
 class SourceLabels(object):
+    """
+    Class holding the labels that go at the top of the table.
+    """
     def __init__(self, ax, x_idx, y_idx, text, color):
+        """
+        Initialize these labels
 
+        :param ax: Axis where these labels willbe placed
+        :param x_idx: The x index in the grid of labels. This is not the element
+                      position, this is the index among the labls.
+        :param y_idx: The y index in the grid of labels. This is not the element
+                      position, this is the index among the labls.
+        :param text: What text to put in this box.
+        :param color: What color to make this box.
+        """
+        # initialize the attributes about the state of this label.
         self.shown = False
         self.highlight = False
         self.ax = ax
 
-        # idx starts from bottom left
         fontsize = 27
 
+        # Then figure out where to put the label. We do some math based on the available
+        # spacing, then figure out where to put this one
+        # idx starts from bottom left
         spacing = 0.25
-
-        # X space goes from 3 to 13.
+        # The X space for these labels goes from 3 to 13.
         x_0 = 3
         x_1 = 13
+        # we need 3 spaces: left, right, center
         width_rect = ((x_1 - x_0) - 3 * spacing) / 2.0
 
         # Y space goes from 8 to 11
         y_0 = 8
         y_1 = 11
+        # we need 4 spaces: bottom, inbetween the 3 labels. No space at top, it aligns
+        # with the top of the figure.
         height_rect = ((y_1 - y_0) - 4 * spacing) / 4.0
 
+        # The text needs to be offset by half the box size
         dx_text = width_rect / 2.0
         dy_text = height_rect / 2.0
 
+        # Then figure out where the lower left corner of the box is
         x = x_0 + spacing * (x_idx + 1) + width_rect * x_idx
         y = y_0 + spacing * (y_idx + 1) + height_rect * y_idx
 
-        if x_idx == 2:  # Make manmade go all the way over
-            width_rect = 5 - spacing
-            # This has to be done now so the position is calculated
-            # properly previously
-
+        # Then we can add the box to the plot. Note that we have to make the edge line
+        # separately, since the fade functions only handle facecolor of the box.
         rect = patches.Rectangle((x, y), width_rect, height_rect,
                                  fill=True, facecolor=color,
-                                 linewidth=1, edgecolor=bpl.almost_black,
-                                 alpha=1.0, zorder=2)
+                                 linewidth=0, alpha=1.0, zorder=2)
         self.ax.add_patch(rect)
-        self.box = ColorChange(rect)
 
+        lines = ax.plot([x, x,               x + width_rect,  x + width_rect, x],
+                        [y, y + height_rect, y + height_rect, y,              y],
+                        lw=1, color=bpl.almost_black)
+
+        # store these as color change objects
+        self.box = ColorChange(rect)
+        self.box_lines = [ColorChange(l) for l in lines]
+
+        # Then add the text for the highlight
         highlight_color = "white"
         txt_hl = self.ax.add_text(x=x + dx_text, y=y + dy_text,
                                        ha="center", va="center", zorder=3,
@@ -174,50 +198,92 @@ class SourceLabels(object):
         txt_hl.set_path_effects([PathEffects.withStroke(linewidth=4,
                                                      foreground=bpl.almost_black)])
         self.text_hl = ColorChange(txt_hl)
+        # hide it initially
         self.text_hl.hide()
 
+        # then add the regular text.
         txt = self.ax.add_text(x=x + dx_text, y=y + dy_text,
                                     ha="center", va="center", zorder=3,
                                     text=text, fontsize=fontsize)
         self.text = ColorChange(txt)
 
+        # The labels are initially hidden
         self.unshow()
 
     def show(self):
+        """
+        Show this label on the axis.
+
+        :return: None
+        """
         self.shown = True
         self.box.unhide()
+        for line in self.box_lines:
+            line.unhide()
+
         if self.highlight:
             self.highlight_on()
         else:
             self.highlight_off()
 
     def unshow(self):
+        """
+        Unshow this label on the axis
+
+        :return: None
+        """
         self.shown = False
-        self.box.hide()
         self.text.hide()
         self.text_hl.hide()
+        self.box.hide()
+        for line in self.box_lines:
+            line.hide()
 
     def highlight_on(self):
+        """
+        Highlight the text on this label
+
+        :return: None
+        """
         self.highlight = True
-        if self.shown:
+        if self.shown:  # only highlight the text if the label is already shown.
             self.text_hl.unhide()
             self.text.hide()
 
     def highlight_off(self):
+        """
+        Turn off the highlighting on this label
+
+        :return: None
+        """
         self.highlight = False
-        if self.shown:
+        if self.shown:  # only unhighlight the text if the label is already shown.
             self.text_hl.hide()
             self.text.unhide()
 
     def fade(self):
+        """
+        Fade all attributes on this label
+
+        :return: None
+        """
         self.text_hl.fade()
         self.text.fade()
         self.box.fade()
+        for line in self.box_lines:
+            line.fade()
 
     def unfade(self):
+        """
+        Unfade all attributes on this label
+
+        :return: None
+        """
         self.text_hl.unfade()
         self.text.unfade()
         self.box.unfade()
+        for line in self.box_lines:
+            line.unfade()
 
 class PeriodicTable(object):
     def __init__(self):
@@ -349,11 +415,6 @@ class PeriodicTable(object):
         return self._fig
 
 
-#TODO: Finish cleaning up the Element class
-#TODO: Make a Periodic Table class containing all the plotting stuff
-#TODO: put the colors in the Periodic Table class, since that's where they
-#      really belong
-#TODO: Clean up the naming convention on things, especially the highlighting
 #TODO: maybe make AGB separate from S-process in the legend? C and N are unique
 #TODO: have a check that all elements other than He and Li are only two sources
 #      at most.
@@ -364,7 +425,5 @@ class PeriodicTable(object):
 #TODO: redo fractions! Removing the lines on the fill-between messed up the
 #      fractions
 #TODO: add alternate names for the sources
-#TODO: make sure the outer border for the source names gets faded when needed
-#TODO: document functions
 #TODO: make sure that unshow doesn't hide low mass label if one of AGB or S is hidden,
 #      but not both
