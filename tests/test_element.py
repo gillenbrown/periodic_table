@@ -1,11 +1,14 @@
 import pytest
 
-from periodic_table import Element, box_fraction_line
+from periodic_table.element import Element, box_fraction_line
 
 from scipy import integrate
 import numpy as np
 
 np.random.seed(0)
+
+# I could do more tests by doing direct plot comparisons, but I don't think those are
+# really necessary for a project this simple. Maybe later...
 
 
 def test_fracs_in_range():
