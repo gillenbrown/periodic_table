@@ -6,7 +6,7 @@ This is a library to make figures showing the sources of different elements on t
 
 ## Installation
 
-TBD
+For now just clone this repo (I haven't gotten it on pip yet). The current dependencies are numpy, matplotlib, and my [betterplotlib library](https://betterplotlib.readthedocs.io/en/master/). 
 
 ## Using `periodic_table`
 
