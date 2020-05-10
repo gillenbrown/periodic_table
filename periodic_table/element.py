@@ -2,9 +2,11 @@ import numpy as np
 import matplotlib.patheffects as PathEffects
 import betterplotlib as bpl
 
+
 class ColorChange(object):
     """Plot item that can have its color changed to be paler, or totally hidden
     from view."""
+
     def __init__(self, plot_item, fade_zorder_change=-10):
         """
         Initialize the object
@@ -66,7 +68,6 @@ class ColorChange(object):
             # change to the faded colors and zorder
             self._set_color_base(self.faded_color)
             self.set_zorder(self.faded_zorder)
-
 
     def unfade(self):
         """
@@ -150,21 +151,34 @@ class Element(object):
 
     # The colors used for each source will be shared by the class. Initialize with
     # default colors. This will be modifed by the periodic table class
-    colors = {"bb":       "#D7E5CC",
-              "cr":       "#C3DDFA",
-              "snia":     "#fe9443",
-              "snii":     "#FEE844",
-              "r":        "#AFBF75",
-              "s":        "#73A0CC",
-              "decay":    "#DDCCDD",
-              "unstable": "#CCCCCC"}
+    colors = {
+        "bb": "#D7E5CC",
+        "cr": "#C3DDFA",
+        "snia": "#fe9443",
+        "snii": "#FEE844",
+        "r": "#AFBF75",
+        "s": "#73A0CC",
+        "decay": "#DDCCDD",
+        "unstable": "#CCCCCC",
+    }
     colors["agb"] = colors["s"]
 
-    def __init__(self, number, symbol, row, column,
-                 frac_bb=0.0, frac_cr=0.0,
-                 frac_snia=0.0, frac_snii=0.0, frac_agb=0.0,
-                 frac_s=0.0, frac_r=0.0,
-                 frac_decay=0.0, frac_unstable=0.0):
+    def __init__(
+        self,
+        number,
+        symbol,
+        row,
+        column,
+        frac_bb=0.0,
+        frac_cr=0.0,
+        frac_snia=0.0,
+        frac_snii=0.0,
+        frac_agb=0.0,
+        frac_s=0.0,
+        frac_r=0.0,
+        frac_decay=0.0,
+        frac_unstable=0.0,
+    ):
         """
         Set up the Element class
 
@@ -198,15 +212,17 @@ class Element(object):
         self.highlight = False
 
         # setup which sources contributed to this element
-        self.fracs = {"bb":       frac_bb,
-                      "cr":       frac_cr,
-                      "snii":     frac_snii,
-                      "snia":     frac_snia,
-                      "agb":      frac_agb,
-                      "s":        frac_s,
-                      "r":        frac_r,
-                      "decay":    frac_decay,
-                      "unstable": frac_unstable}
+        self.fracs = {
+            "bb": frac_bb,
+            "cr": frac_cr,
+            "snii": frac_snii,
+            "snia": frac_snia,
+            "agb": frac_agb,
+            "s": frac_s,
+            "r": frac_r,
+            "decay": frac_decay,
+            "unstable": frac_unstable,
+        }
 
         # Then double check this
         total_fracs = sum(self.fracs.values())
@@ -221,18 +237,29 @@ class Element(object):
             if frac > 0:
                 nonzero_sources += 1
         if nonzero_sources > 2 and self.symbol not in ["He", "Li"]:
-            raise ValueError("Element {} has more then 2 sources.".format(self.symbol) +
-                             "This is not yet implemented")
+            raise ValueError(
+                "Element {} has more then 2 sources.".format(self.symbol)
+                + "This is not yet implemented"
+            )
 
         # None of the sources will be initially shown on the table.
-        self.shown = {source:False for source in self.colors}
+        self.shown = {source: False for source in self.colors}
         self.fills = dict()
 
         # note that here we don't call setup, since we don't know which axis to put
         # this element on yet.
 
-    def set_scheme(self, color_bb, color_cr, color_snia, color_snii, color_r,
-                           color_agb, color_decay, color_unstable):
+    def set_scheme(
+        self,
+        color_bb,
+        color_cr,
+        color_snia,
+        color_snii,
+        color_r,
+        color_agb,
+        color_decay,
+        color_unstable,
+    ):
         """
         Set the color scheme for the elements
 
@@ -267,49 +294,60 @@ class Element(object):
         # When we highlight the element, the text for the name will be white, with a
         # black outline. We need to have a separate text object for this.
         highlight_color = "white"
-        highlight_text = ax.add_text(x=self.column + 0.5,
-                                     y=self.row + 0.65,
-                                     text=self.symbol,
-                                     coords="data",
-                                     fontsize=self.fontsize,
-                                     color=highlight_color,
-                                     horizontalalignment="center",
-                                     verticalalignment="center",
-                                     zorder=100)
-        highlight_text.set_path_effects([PathEffects.withStroke(linewidth=5,
-                                             foreground=bpl.almost_black)])
+        highlight_text = ax.add_text(
+            x=self.column + 0.5,
+            y=self.row + 0.65,
+            text=self.symbol,
+            coords="data",
+            fontsize=self.fontsize,
+            color=highlight_color,
+            horizontalalignment="center",
+            verticalalignment="center",
+            zorder=100,
+        )
+        highlight_text.set_path_effects(
+            [PathEffects.withStroke(linewidth=5, foreground=bpl.almost_black)]
+        )
         self.ax_name_highlight = ColorChange(highlight_text)
         # This highlighted name is originally hidden.
         self.ax_name_highlight.hide()
 
         # When it's not highlighted, the text is just black. This is basiclly the same
         # as highlight_text, just without the highlight
-        name = ax.add_text(x=self.column + 0.5,
-                           y=self.row + 0.65,
-                           text=self.symbol,
-                           coords="data",
-                           color=bpl.almost_black,
-                           fontsize=self.fontsize,
-                           horizontalalignment="center",
-                           verticalalignment="center",
-                           zorder=100)
+        name = ax.add_text(
+            x=self.column + 0.5,
+            y=self.row + 0.65,
+            text=self.symbol,
+            coords="data",
+            color=bpl.almost_black,
+            fontsize=self.fontsize,
+            horizontalalignment="center",
+            verticalalignment="center",
+            zorder=100,
+        )
         self.ax_name = ColorChange(name)
 
         # The number is never highlighted
-        num = ax.add_text(x=self.column + 0.5,
-                          y=self.row + 0.25,
-                          text=self.number,
-                          color=bpl.almost_black,
-                          coords="data", fontsize=0.6 * self.fontsize,
-                          horizontalalignment="center",
-                          verticalalignment="center")
+        num = ax.add_text(
+            x=self.column + 0.5,
+            y=self.row + 0.25,
+            text=self.number,
+            color=bpl.almost_black,
+            coords="data",
+            fontsize=0.6 * self.fontsize,
+            horizontalalignment="center",
+            verticalalignment="center",
+        )
         self.ax_num = ColorChange(num)
 
         # Then draw the box around the element. This is just a square.
-        box = ax.plot([self.column, self.column, self.column+1, self.column+1, self.column],
-                      [self.row, self.row+1, self.row+1, self.row, self.row],
-                      c=bpl.almost_black,
-                      lw=5, zorder=100)
+        box = ax.plot(
+            [self.column, self.column, self.column + 1, self.column + 1, self.column],
+            [self.row, self.row + 1, self.row + 1, self.row, self.row],
+            c=bpl.almost_black,
+            lw=5,
+            zorder=100,
+        )
         # We do store these box segmments so they can be faded later.
         self.box_list = [ColorChange(segment) for segment in box]
 
@@ -317,17 +355,20 @@ class Element(object):
 
         # fill the box white. This will be the base that's seen when the sources are
         # hidden.
-        self.white_fill = ax.fill_between(x=[self.column, self.column+1],
-                                          y1=self.row,
-                                          y2=self.row+1,
-                                          color="white", alpha=0.5, zorder=-100)
+        self.white_fill = ax.fill_between(
+            x=[self.column, self.column + 1],
+            y1=self.row,
+            y2=self.row + 1,
+            color="white",
+            alpha=0.5,
+            zorder=-100,
+        )
 
         # then fill the rest
         self.box_fill(ax)
         # hide all the fills to start
         for fills in self.fills.values():
             fills.hide()
-
 
     def show_source(self, source):
         """
@@ -339,7 +380,7 @@ class Element(object):
         self.shown[source] = True
         try:
             self.fills[source].unhide()
-        except KeyError:   # this source isn't present.
+        except KeyError:  # this source isn't present.
             # We don't have objects for sources with zero contribution, so we don't
             # raise an error
             pass
@@ -377,8 +418,10 @@ class Element(object):
             highlight_threshold = 0.5
             # low mass has a special check
             if source == "low mass":
-                return (self.fracs["AGB"] > highlight_threshold
-                        or self.fracs["S"] > highlight_threshold)
+                return (
+                    self.fracs["AGB"] > highlight_threshold
+                    or self.fracs["S"] > highlight_threshold
+                )
             else:
                 return self.fracs[source] > highlight_threshold
 
@@ -466,46 +509,55 @@ class Element(object):
         # He and Li are special cases with 3 important elements. Handle those first
         if self.symbol == "He":
             # Start with the bottom bb line
-            bb_line = [y_bottom + box_fraction_line(self.fracs["bb"])(x)
-                       for x in base_xs]
+            bb_line = [
+                y_bottom + box_fraction_line(self.fracs["bb"])(x) for x in base_xs
+            ]
             # Then the AGB line will be in the middle. We can use the total fraction
             # of BB and AGB to get this
             total_agb_frac = self.fracs["bb"] + self.fracs["agb"]
-            agb_line = [y_bottom + box_fraction_line(total_agb_frac)(x)
-                        for x in base_xs]
+            agb_line = [
+                y_bottom + box_fraction_line(total_agb_frac)(x) for x in base_xs
+            ]
             # Then the rest will be snii
 
             # We can fill this all in
-            bb = ax.fill_between(x=xs, y1=y_bottom, y2=bb_line, lw=0,
-                                 color=self.colors["bb"], zorder=1)
-            agb = ax.fill_between(x=xs, y1=bb_line, y2=agb_line, lw=0,
-                                  color=self.colors["agb"], zorder=1)
-            snii = ax.fill_between(x=xs, y1=agb_line, y2=y_top, lw=0,
-                                   color=self.colors["snii"], zorder=1)
+            bb = ax.fill_between(
+                x=xs, y1=y_bottom, y2=bb_line, lw=0, color=self.colors["bb"], zorder=1
+            )
+            agb = ax.fill_between(
+                x=xs, y1=bb_line, y2=agb_line, lw=0, color=self.colors["agb"], zorder=1
+            )
+            snii = ax.fill_between(
+                x=xs, y1=agb_line, y2=y_top, lw=0, color=self.colors["snii"], zorder=1
+            )
 
             self.fills["snii"] = ColorChange(snii)
             self.fills["agb"] = ColorChange(agb)
             self.fills["bb"] = ColorChange(bb)
 
-
         elif self.symbol == "Li":
             # Start with the bottom bb line
-            bb_line = [y_bottom + box_fraction_line(self.fracs["bb"])(x)
-                       for x in base_xs]
+            bb_line = [
+                y_bottom + box_fraction_line(self.fracs["bb"])(x) for x in base_xs
+            ]
             # Then the AGB line will be in the middle. We can use the total fraction
             # of BB and AGB to get this
             total_agb_frac = self.fracs["bb"] + self.fracs["agb"]
-            agb_line = [y_bottom + box_fraction_line(total_agb_frac)(x)
-                       for x in base_xs]
+            agb_line = [
+                y_bottom + box_fraction_line(total_agb_frac)(x) for x in base_xs
+            ]
             # Then the rest will be cosmic rays
 
             # We can fill this all in
-            bb = ax.fill_between(x=xs, y1=y_bottom, y2=bb_line, lw=0,
-                                 color=self.colors["bb"], zorder=1)
-            agb = ax.fill_between(x=xs, y1=bb_line, y2=agb_line, lw=0,
-                                 color=self.colors["agb"], zorder=1)
-            cr = ax.fill_between(x=xs, y1=agb_line, y2=y_top, lw=0,
-                                 color=self.colors["cr"], zorder=1)
+            bb = ax.fill_between(
+                x=xs, y1=y_bottom, y2=bb_line, lw=0, color=self.colors["bb"], zorder=1
+            )
+            agb = ax.fill_between(
+                x=xs, y1=bb_line, y2=agb_line, lw=0, color=self.colors["agb"], zorder=1
+            )
+            cr = ax.fill_between(
+                x=xs, y1=agb_line, y2=y_top, lw=0, color=self.colors["cr"], zorder=1
+            )
 
             self.fills["cr"] = ColorChange(cr)
             self.fills["agb"] = ColorChange(agb)
@@ -523,12 +575,26 @@ class Element(object):
                     line_func = box_fraction_line(1.0 - self.fracs[source])
                     line_ys = [min(y_bottom + line_func(x), y_top) for x in base_xs]
 
-                    fill = ax.fill_between(x=xs, y1=line_ys, y2=y_top,
-                                           lw=0, color=self.colors[source], zorder=1)
+                    fill = ax.fill_between(
+                        x=xs,
+                        y1=line_ys,
+                        y2=y_top,
+                        lw=0,
+                        color=self.colors[source],
+                        zorder=1,
+                    )
                     self.fills[source] = ColorChange(fill)
                 else:  # in under
-                    line_ys = [y_bottom + box_fraction_line(self.fracs[source])(x)
-                               for x in base_xs]
-                    fill = ax.fill_between(x=xs, y1=y_bottom, y2=line_ys,
-                                           lw=0, color=self.colors[source], zorder=1)
+                    line_ys = [
+                        y_bottom + box_fraction_line(self.fracs[source])(x)
+                        for x in base_xs
+                    ]
+                    fill = ax.fill_between(
+                        x=xs,
+                        y1=y_bottom,
+                        y2=line_ys,
+                        lw=0,
+                        color=self.colors[source],
+                        zorder=1,
+                    )
                     self.fills[source] = ColorChange(fill)
