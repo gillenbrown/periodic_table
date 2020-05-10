@@ -338,6 +338,9 @@ class PeriodicTable(object):
         self._labels["decay"] = SourceLabels(self._ax, 0, 0, "Nuclear Decay", elts[0].colors["decay"])
         self._labels["unstable"] = SourceLabels(self._ax, 1, 0, "Not Naturally Occurring", elts[0].colors["unstable"])
 
+        # have a dictionary showing which sources are visible
+        self.sources_on = {label:False for label in self._labels}
+
         # Then add each of the elements
         for elt in elts:
             elt.setup(self._ax)
@@ -384,10 +387,20 @@ class PeriodicTable(object):
         :return: None
         """
         sources = [item.lower() for item in args]
-        # add the labels. This also does the error checking
+        # there is a separate low mass label that is both AGB and S
+        if "low mass" in sources:
+            sources.append("s")
+            sources.append("agb")
+            sources.remove("low mass")
+
+        # then add these to our dictionary. This also does the error checking
         for source in sources:
-            if not source in self._labels:
+            if source not in self.sources_on:
                 raise ValueError("Source {} not correct.".format(source))
+            self.sources_on[source] = True
+
+        # add the labels
+        for source in sources:
             self._labels[source].show()
 
         # Then show all the elements
@@ -403,11 +416,27 @@ class PeriodicTable(object):
         :return: None
         """
         sources = [item.lower() for item in args]
-        # go through the labels. This also does the error checking
+        # there is a separate low mass label that is both AGB and S
+        if "low mass" in sources:
+            sources.append("s")
+            sources.append("agb")
+            sources.remove("low mass")
+
+        # then add these to our dictionary. This also does the error checking
         for source in sources:
-            if not source in self._labels:
+            if source not in self.sources_on:
                 raise ValueError("Source {} not correct.".format(source))
-            self._labels[source].unshow()
+            self.sources_on[source] = False
+
+        # go through the labels. We have to be careful about AGB and S process. We want
+        # the label if either of those is present
+        for source in sources:
+            if source in ["agb", "s"]:
+                if self.sources_on["agb"] is False and self.sources_on["s"] is False:
+                    self._labels[source].unshow()
+            # otherwise we just remove it
+            else:
+                self._labels[source].unshow()
 
         # then do the elements
         for elt in elts:
@@ -513,6 +542,5 @@ class PeriodicTable(object):
 #TODO: add multiple color schemes - pretty or visually distinct
 #TODO: redo fractions! Removing the lines on the fill-between messed up the
 #      fractions
-#TODO: add alternate names for the sources
 #TODO: make sure that unshow doesn't hide low mass label if one of AGB or S is hidden,
 #      but not both
