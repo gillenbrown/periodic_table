@@ -287,7 +287,14 @@ class SourceLabels(object):
 
 class PeriodicTable(object):
     def __init__(self):
+        """
+        Set up the periodic table figure and axes.
+        """
         self.__elts = elts
+        # The periodic table layout has 18 columns and 9 rows (counting Lanthanides and
+        # Actinides separately). I'll add spacing columns on the left and right, top and
+        # bottom, plus between the Lanthanides and Actinides and the rest of the table.
+        # we make the figure 1 inch per square. There will be no space on the outside.
         fig, ax = bpl.subplots(figsize=[20, 12], tight_layout=False,
                                gridspec_kw={"hspace":0, "wspace":0,
                                             "left": 0, "right": 1,
@@ -296,15 +303,21 @@ class PeriodicTable(object):
         self._fig = fig
         self._ax = ax
 
+        # make the background of the figure transparent
         self._fig.patch.set_alpha(0.0)
         self._fig.set_facecolor("white")
 
+        # remove all the labels from the axes
         self._ax.remove_labels("both")
+        # make the limits match the figure size, then use equal scale to make sure the
+        # element squares are actually square
+        self._ax.set_limits(0, 20, 0, 12)
         self._ax.equal_scale()
+        # get rid of the spines on the outside
         for s in self._ax.spines.values():
             s.set_linewidth(0)
+        # and make the overall axis transparent.
         self._ax.patch.set_alpha(0)
-        self._ax.set_limits(0, 20, 0, 12)
 
         # add the lines connecting the Lanthanides and Actinides
         l1 = self._ax.plot([3, 3.6666666, 3.666666, 4], [5.5, 5.5, 2.5, 2.5], lw=4,
@@ -325,72 +338,131 @@ class PeriodicTable(object):
         self._labels["decay"] = SourceLabels(self._ax, 0, 0, "Nuclear Decay", elts[0].colors["decay"])
         self._labels["unstable"] = SourceLabels(self._ax, 1, 0, "Not Naturally Occurring", elts[0].colors["unstable"])
 
+        # Then add each of the elements
         for elt in elts:
             elt.setup(self._ax)
 
     def highlight_source(self, source):
+        """
+        Highlight this source throughout the table.
+
+        This will highlight the elements that are primarily from this source, as well
+        as the label at the top
+
+        :param source: Source to highlight
+        :return: None
+        """
+        # Check all the labels
         for label in self._labels:
             if label == source.lower():
                 self._labels[label].highlight_on()
             else:
                 self._labels[label].highlight_off()
 
+        # Then the elements
         for elt in elts:
             elt.highlight_source(source.lower())
 
     def unhighlight_all_sources(self):
+        """
+        Get rid of all highlighting on the table.
+
+        :return: None
+        """
+        # go through the labels.
         for label in self._labels:
             self._labels[label].highlight_off()
-
+        # then the elements
         for elt in elts:
             elt.highlight_source(None)
 
     def show_source(self, *args):
+        """
+        Add the element fills and labels for a given source
+
+        :param args: As many sources as you want to add.
+        :return: None
+        """
         sources = [item.lower() for item in args]
+        # add the labels. This also does the error checking
         for source in sources:
             if not source in self._labels:
                 raise ValueError("Source {} not correct.".format(source))
             self._labels[source].show()
 
+        # Then show all the elements
         for elt in elts:
             for source in sources:
                 elt.show_source(source)
 
     def unshow_source(self, *args):
+        """
+        Hide the elemental fills and labels for a given source
+
+        :param args: As many sources as you want to unshow
+        :return: None
+        """
         sources = [item.lower() for item in args]
+        # go through the labels. This also does the error checking
         for source in sources:
             if not source in self._labels:
                 raise ValueError("Source {} not correct.".format(source))
             self._labels[source].unshow()
 
+        # then do the elements
         for elt in elts:
             for source in sources:
                 elt.unshow_source(source)
 
     def show_all_sources(self):
+        """
+        Show all sources on the table.
+
+        This is just a wrapper around `show_source`
+
+        :return: None
+        """
         self.show_source("bb", "cr", "s", "agb", "snii", "snia", "r", "decay",
                          "unstable")
 
     def unshow_all_sources(self):
+        """
+        Show all sources on the table.
+
+        This is just a wrapper around `unshow_source`
+
+        :return: None
+        """
         self.unshow_source("bb", "cr", "s", "agb", "snii", "snia", "r", "decay",
                            "unstable")
 
-    def isolate_elt(self, *args, keep_labels=True):
+    def isolate_elt(self, *args):
+        """
+        Isolate a given element by fading all other elements. This also fades all the
+        labels other than the ones that are primary in the elements isolated.
 
+        :param args: As many elements as you want to isolate.
+        :return: None
+        """
+        # fade the Lanthanide and Actinide lines
         for l in self._connector_lines:
             l.fade()
 
-        if keep_labels:
-            for label in self._labels:
-                fade_this = True
-                for elt in elts:
-                    if elt.symbol in args and elt._highlight_bool(label):
-                        fade_this = False
-                if fade_this:
-                    self._labels[label].fade()
-                else:
-                    self._labels[label].unfade()
+        # Then check the labels.
+        for label in self._labels:
+            # by default we'll fade it, but check if the elements isolated are
+            # primarily from this source
+            fade_this = True
+            for elt in elts:
+                if elt.symbol in args and elt.highlight_bool(label):
+                    fade_this = False
+            # then fade the label if there are no elements
+            if fade_this:
+                self._labels[label].fade()
+            else:
+                self._labels[label].unfade()
 
+        # then fade the elements that are not listed
         for elt in elts:
             if elt.symbol not in args:
                 elt.fade()
@@ -398,20 +470,40 @@ class PeriodicTable(object):
                 elt.unfade()
 
     def unisolate_all_elts(self):
+        """
+        Unfade all elements and labels
+
+        :return: None
+        """
+        # Lanthanide and Actinide lines
         for l in self._connector_lines:
             l.unfade()
 
+        # source labels
         for label in self._labels.values():
             label.unfade()
 
+        # elements
         for elt in elts:
             elt.unfade()
 
     def save(self, savename):
+        """
+        Save the plot
+
+        :param savename: Path or filename to save the plot to
+        :return: None
+        """
         self._fig.savefig(savename)
 
     def get_figure(self):
-        # for use in notebooks
+        """
+        Returns the figure, so it can be shown in a Jupyter notebook
+
+        Not much use for this otherwise.
+
+        :return: Figure object
+        """
         return self._fig
 
 

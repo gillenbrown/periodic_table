@@ -324,7 +324,7 @@ class Element(object):
             # raise an error
             pass
 
-    def _highlight_bool(self, source):
+    def highlight_bool(self, source):
         """
         Internal function to calculate whether an element has more than 50% contribution
         from a given source
@@ -355,7 +355,7 @@ class Element(object):
         :param source: Which source to highlight
         :return: None, but the highlight text is activated
         """
-        self.highlight = self._highlight_bool(source)
+        self.highlight = self.highlight_bool(source)
 
         if self.highlight:
             self.ax_name_highlight.unhide()
