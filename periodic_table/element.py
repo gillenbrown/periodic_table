@@ -148,7 +148,8 @@ def box_fraction_line(frac):
 class Element(object):
     fontsize = 30
 
-    # The colors used for each source will be shared by the class.
+    # The colors used for each source will be shared by the class. Initialize with
+    # default colors. This will be modifed by the periodic table class
     colors = {"bb":       "#D7E5CC",
               "cr":       "#C3DDFA",
               "snia":     "#fe9443",
@@ -229,6 +230,32 @@ class Element(object):
 
         # note that here we don't call setup, since we don't know which axis to put
         # this element on yet.
+
+    def set_scheme(self, color_bb, color_cr, color_snia, color_snii, color_r,
+                           color_agb, color_decay, color_unstable):
+        """
+        Set the color scheme for the elements
+
+        :param color_bb: Color for Big Bang fill
+        :param color_cr: Color for cosmic ray fill
+        :param color_snia: Color for SNIa fill
+        :param color_snii: Color for SNII fill
+        :param color_r: Color for R process fill
+        :param color_agb: Color for AGB/S process fill
+        :param color_decay: Color for decay elements fill
+        :param color_unstable: Color for unstable elements fill
+        :return: None
+        """
+        self.colors["bb"] = color_bb
+        self.colors["cr"] = color_cr
+        self.colors["snia"] = color_snia
+        self.colors["snii"] = color_snii
+        self.colors["r"] = color_r
+        self.colors["s"] = color_agb
+        self.colors["decay"] = color_decay
+        self.colors["unstable"] = color_unstable
+
+        self.colors["agb"] = self.colors["s"]
 
     def setup(self, ax):
         """

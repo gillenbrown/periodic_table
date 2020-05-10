@@ -286,11 +286,22 @@ class SourceLabels(object):
             line.unfade()
 
 class PeriodicTable(object):
-    def __init__(self):
+    def __init__(self, label_bb="Big Bang", label_cr="Cosmic Ray Spallation",
+                 label_agb="Low Mass Stars", label_snii="Exploding Massive Stars",
+                 label_snia="Exploding White Dwarfs",
+                 label_r="Merging Neutron Stars?", label_decay="Nuclear Decay",
+                 label_unstable="Not Naturally Occurring",
+                 color_bb="#D7E5CC", color_cr="#C3DDFA", color_snia="#fe9443",
+                 color_snii="#FEE844", color_r="#AFBF75", color_agb="#73A0CC",
+                 color_decay="#DDCCDD", color_unstable="#CCCCCC"):
         """
         Set up the periodic table figure and axes.
         """
-        self.__elts = elts
+        # set the element color scheme. This attribute is shared by all members of the
+        # element class, so it will be applied to all.
+        elts[0].set_scheme(color_bb, color_cr, color_snia, color_snii, color_r,
+                           color_agb, color_decay, color_unstable)
+
         # The periodic table layout has 18 columns and 9 rows (counting Lanthanides and
         # Actinides separately). I'll add spacing columns on the left and right, top and
         # bottom, plus between the Lanthanides and Actinides and the rest of the table.
@@ -328,15 +339,15 @@ class PeriodicTable(object):
 
         # add the labels
         self._labels = dict()
-        self._labels["bb"] = SourceLabels(self._ax, 0, 3, "Big Bang", elts[0].colors["bb"])
-        self._labels["cr"] = SourceLabels(self._ax, 1, 3, "Cosmic Ray Spallation", elts[0].colors["cr"])
-        self._labels["s"] = SourceLabels(self._ax, 0, 2, "Low Mass Stars", elts[0].colors["s"])
+        self._labels["bb"] = SourceLabels(self._ax, 0, 3, label_bb, color_bb)
+        self._labels["cr"] = SourceLabels(self._ax, 1, 3, label_cr, color_cr)
+        self._labels["s"] = SourceLabels(self._ax, 0, 2, label_agb, color_agb)
         self._labels["agb"] = self._labels["s"]
-        self._labels["snii"] = SourceLabels(self._ax, 1, 2, "Exploding Massive Stars", elts[0].colors["snii"])
-        self._labels["snia"] = SourceLabels(self._ax, 0, 1, "Exploding White Dwarfs", elts[0].colors["snia"])
-        self._labels["r"] = SourceLabels(self._ax, 1, 1, "Merging Neutron Stars?", elts[0].colors["r"])
-        self._labels["decay"] = SourceLabels(self._ax, 0, 0, "Nuclear Decay", elts[0].colors["decay"])
-        self._labels["unstable"] = SourceLabels(self._ax, 1, 0, "Not Naturally Occurring", elts[0].colors["unstable"])
+        self._labels["snii"] = SourceLabels(self._ax, 1, 2, label_snii, color_snii)
+        self._labels["snia"] = SourceLabels(self._ax, 0, 1, label_snia, color_snia)
+        self._labels["r"] = SourceLabels(self._ax, 1, 1, label_r, color_r)
+        self._labels["decay"] = SourceLabels(self._ax, 0, 0, label_decay, color_decay)
+        self._labels["unstable"] = SourceLabels(self._ax, 1, 0, label_unstable, color_unstable)
 
         # have a dictionary showing which sources are visible
         self.sources_on = {label:False for label in self._labels}
@@ -535,12 +546,3 @@ class PeriodicTable(object):
         """
         return self._fig
 
-
-#TODO: add description to GitHub page
-#TODO: allow user to customize names
-#TODO: allow user to customize background color (none or white, at least)
-#TODO: add multiple color schemes - pretty or visually distinct
-#TODO: redo fractions! Removing the lines on the fill-between messed up the
-#      fractions
-#TODO: make sure that unshow doesn't hide low mass label if one of AGB or S is hidden,
-#      but not both
