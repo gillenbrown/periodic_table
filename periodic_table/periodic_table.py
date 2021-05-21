@@ -325,7 +325,6 @@ class PeriodicTable(object):
         label_snii="Exploding Massive Stars",
         label_snia="Exploding White Dwarfs",
         label_r="Merging Neutron Stars?",
-        label_decay="Nuclear Decay",
         label_unstable="Not Naturally Occurring",
         color_bb="#D7E5CC",
         color_cr="#C3DDFA",
@@ -333,7 +332,6 @@ class PeriodicTable(object):
         color_snii="#FEE844",
         color_r="#AFBF75",
         color_agb="#73A0CC",
-        color_decay="#DDCCDD",
         color_unstable="#CCCCCC",
     ):
         """
@@ -348,7 +346,6 @@ class PeriodicTable(object):
             color_snii,
             color_r,
             color_agb,
-            color_decay,
             color_unstable,
         )
 
@@ -414,9 +411,8 @@ class PeriodicTable(object):
         self._labels["snii"] = SourceLabels(self._ax, 1, 2, label_snii, color_snii)
         self._labels["snia"] = SourceLabels(self._ax, 0, 1, label_snia, color_snia)
         self._labels["r"] = SourceLabels(self._ax, 1, 1, label_r, color_r)
-        self._labels["decay"] = SourceLabels(self._ax, 0, 0, label_decay, color_decay)
         self._labels["unstable"] = SourceLabels(
-            self._ax, 1, 0, label_unstable, color_unstable
+            self._ax, 0, 0, label_unstable, color_unstable
         )
 
         # have a dictionary showing which sources are visible
@@ -538,9 +534,7 @@ class PeriodicTable(object):
 
         :return: None
         """
-        self.show_source(
-            "bb", "cr", "s", "agb", "snii", "snia", "r", "decay", "unstable"
-        )
+        self.show_source("bb", "cr", "s", "agb", "snii", "snia", "r", "unstable")
 
     def unshow_all_sources(self):
         """
@@ -550,9 +544,7 @@ class PeriodicTable(object):
 
         :return: None
         """
-        self.unshow_source(
-            "bb", "cr", "s", "agb", "snii", "snia", "r", "decay", "unstable"
-        )
+        self.unshow_source("bb", "cr", "s", "agb", "snii", "snia", "r", "unstable")
 
     def isolate_elt(self, *args):
         """

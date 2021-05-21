@@ -158,7 +158,6 @@ class Element(object):
         "snii": "#FEE844",
         "r": "#AFBF75",
         "s": "#73A0CC",
-        "decay": "#DDCCDD",
         "unstable": "#CCCCCC",
     }
     colors["agb"] = colors["s"]
@@ -176,7 +175,6 @@ class Element(object):
         frac_agb=0.0,
         frac_s=0.0,
         frac_r=0.0,
-        frac_decay=0.0,
         frac_unstable=0.0,
     ):
         """
@@ -195,8 +193,6 @@ class Element(object):
                          burning in low mass stars.
         :param frac_s: Fraction of this element's abundance that comes from S process
         :param frac_r: Fraction of this element's abundance that comes from R process
-        :param frac_decay: Fraction of this element's abundance that comes from
-                           nuclear decay
         :param frac_unstable: This will be 1.0 if the element is not naturally occuring
         """
         # Set up the element's basic info. We mess around with the indices a little to
@@ -220,7 +216,6 @@ class Element(object):
             "agb": frac_agb,
             "s": frac_s,
             "r": frac_r,
-            "decay": frac_decay,
             "unstable": frac_unstable,
         }
 
@@ -257,7 +252,6 @@ class Element(object):
         color_snii,
         color_r,
         color_agb,
-        color_decay,
         color_unstable,
     ):
         """
@@ -269,7 +263,6 @@ class Element(object):
         :param color_snii: Color for SNII fill
         :param color_r: Color for R process fill
         :param color_agb: Color for AGB/S process fill
-        :param color_decay: Color for decay elements fill
         :param color_unstable: Color for unstable elements fill
         :return: None
         """
@@ -279,7 +272,6 @@ class Element(object):
         self.colors["snii"] = color_snii
         self.colors["r"] = color_r
         self.colors["s"] = color_agb
-        self.colors["decay"] = color_decay
         self.colors["unstable"] = color_unstable
 
         self.colors["agb"] = self.colors["s"]
