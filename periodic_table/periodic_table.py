@@ -548,8 +548,7 @@ class PeriodicTable(object):
 
     def isolate_elt(self, *args):
         """
-        Isolate a given element by fading all other elements. This also fades all the
-        labels other than the ones that are primary in the elements isolated.
+        Isolate a given element by fading all other elements.
 
         :param args: As many elements as you want to isolate.
         :return: None
@@ -558,19 +557,9 @@ class PeriodicTable(object):
         for l in self._connector_lines:
             l.fade()
 
-        # Then check the labels.
+        # fade all labels
         for label in self._labels:
-            # by default we'll fade it, but check if the elements isolated are
-            # primarily from this source
-            fade_this = True
-            for elt in elts:
-                if elt.symbol in args and elt.highlight_bool(label):
-                    fade_this = False
-            # then fade the label if there are no elements
-            if fade_this:
-                self._labels[label].fade()
-            else:
-                self._labels[label].unfade()
+            self._labels[label].fade()
 
         # then fade the elements that are not listed
         for elt in elts:
@@ -578,6 +567,23 @@ class PeriodicTable(object):
                 elt.fade()
             else:
                 elt.unfade()
+
+    def isolate_elt_label(self, *args):
+        """
+        Isolate a given element by fading all other elements. This also fades all the
+        labels other than the ones that are primary in the elements isolated.
+
+        :param args: As many elements as you want to isolate.
+        :return: None
+        """
+        # first use the fade_elt to fade the elements and all labels, then unfade
+        # the label of interest
+        self.isolate_elt(*args)
+
+        for label in self._labels:
+            for elt in elts:
+                if elt.symbol in args and elt.highlight_bool(label):
+                    self._labels[label].unfade()
 
     def unisolate_all_elts(self):
         """
