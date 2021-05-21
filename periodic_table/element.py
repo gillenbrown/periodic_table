@@ -22,36 +22,51 @@ class ColorChange(object):
         self.plot_item = plot_item
 
         # Then figure out what the functions to modify the color are. This depends
-        # on what kind of matplotlib object we have
-        try:
-            self.get_color = self.plot_item.get_color
-            self._set_color_base = self.plot_item.set_color
-        except AttributeError:
-            # for facecolor the thing it returns is a different format, so
-            # we have to parse it to make it play nice with the other functions.
-            # It also depends on what kind of thing we have, strangely
-            if len(self.plot_item.get_facecolor()) == 1:
-                # This returns an array with an array of an RGBA tuple. We extract
-                # the inner array and ignore alpha
-                self.get_color = lambda: self.plot_item.get_facecolor()[0][0:3]
-            elif len(self.plot_item.get_facecolor()) == 4:
-                # here there is no outer array, so we just ignore alpha
-                self.get_color = lambda: self.plot_item.get_facecolor()[0:3]
+        # on what kind of matplotlib object we have. We do have to check for the
+        # special case of the path effects
+        if type(plot_item) != PathEffects.withStroke:
+            try:
+                self.get_color = self.plot_item.get_color
+                self._set_color_base = self.plot_item.set_color
+            except AttributeError:
+                # for facecolor the thing it returns is a different format, so
+                # we have to parse it to make it play nice with the other functions.
+                # It also depends on what kind of thing we have, strangely
+                if len(self.plot_item.get_facecolor()) == 1:
+                    # This returns an array with an array of an RGBA tuple. We extract
+                    # the inner array and ignore alpha
+                    self.get_color = lambda: self.plot_item.get_facecolor()[0][0:3]
+                elif len(self.plot_item.get_facecolor()) == 4:
+                    # here there is no outer array, so we just ignore alpha
+                    self.get_color = lambda: self.plot_item.get_facecolor()[0:3]
 
-            self._set_color_base = self.plot_item.set_facecolor
+                self._set_color_base = self.plot_item.set_facecolor
 
-        # Then set functions to modify the alpha
-        self.get_alpha = self.plot_item.get_alpha
-        self.set_alpha = self.plot_item.set_alpha
-        self.original_alpha = self.get_alpha()
+            # Then set functions to modify the alpha
+            self.get_alpha = self.plot_item.get_alpha
+            self.set_alpha = self.plot_item.set_alpha
 
-        # ... and zorder
-        self.get_zorder = self.plot_item.get_zorder
-        self.set_zorder = self.plot_item.set_zorder
+            # ... and zorder
+            self.get_zorder = self.plot_item.get_zorder
+            self.set_zorder = self.plot_item.set_zorder
+        else:  # path effects are weird
+            self.get_color = lambda: self.plot_item._gc["foreground"]
+
+            def temp_set_color_base(color):
+                self.plot_item._gc["foreground"] = color
+
+            self._set_color_base = temp_set_color_base
+
+            # alpha and zorderdoesn't work here, use dummy functions
+            self.get_alpha = lambda: 1
+            self.set_alpha = lambda x: None
+            self.get_zorder = lambda: 1
+            self.set_zorder = lambda x: None
 
         # Then calculate what color and zorder will be used when the object is faded.
         # We store this now, but it can be modified later if the object's color is
         # directly changed by the user
+        self.original_alpha = self.get_alpha()
         self.original_color = self.get_color()
         self.faded_color = bpl.fade_color(self.original_color)
         self.original_zorder = self.get_zorder()
@@ -300,8 +315,12 @@ class Element(object):
         highlight_text.set_path_effects(
             [PathEffects.withStroke(linewidth=5, foreground=bpl.almost_black)]
         )
+        # Setting the ColorChange for the highted text is tricky. We should use both
+        # the main object (although I don't think it will matter becase it is white),
+        # but also the path effect that is highlighted.
+        self.ax_name_highlight_stroke = ColorChange(highlight_text._path_effects[0])
         self.ax_name_highlight = ColorChange(highlight_text)
-        # This highlighted name is originally hidden.
+        # This highlighted name is originally hidden. This hides the stroke too
         self.ax_name_highlight.hide()
 
         # When it's not highlighted, the text is just black. This is basiclly the same
@@ -443,6 +462,7 @@ class Element(object):
         for segment in self.box_list:
             segment.fade()
         self.ax_name_highlight.fade()
+        self.ax_name_highlight_stroke.fade()
         self.ax_name.fade()
         self.ax_num.fade()
 
@@ -458,6 +478,7 @@ class Element(object):
         for segment in self.box_list:
             segment.unfade()
         self.ax_name_highlight.unfade()
+        self.ax_name_highlight_stroke.unfade()
         self.ax_name.unfade()
         self.ax_num.unfade()
 

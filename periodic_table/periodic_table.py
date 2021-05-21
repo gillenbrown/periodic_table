@@ -221,8 +221,12 @@ class SourceLabels(object):
         txt_hl.set_path_effects(
             [PathEffects.withStroke(linewidth=4, foreground=bpl.almost_black)]
         )
+        # Setting the ColorChange for the highted text is tricky. We should use both
+        # the main object (although I don't think it will matter becase it is white),
+        # but also the path effect that is highlighted.
+        self.text_hl_stroke = ColorChange(txt_hl._path_effects[0])
         self.text_hl = ColorChange(txt_hl)
-        # hide it initially
+        # hide it initially. This hides the stroke too.
         self.text_hl.hide()
 
         # then add the regular text.
@@ -291,13 +295,14 @@ class SourceLabels(object):
             self.text_hl.hide()
             self.text.unhide()
 
-    def fade(self):
+    def fade(self, to_print=False):
         """
         Fade all attributes on this label
 
         :return: None
         """
         self.text_hl.fade()
+        self.text_hl_stroke.fade()
         self.text.fade()
         self.box.fade()
         for line in self.box_lines:
@@ -310,6 +315,7 @@ class SourceLabels(object):
         :return: None
         """
         self.text_hl.unfade()
+        self.text_hl_stroke.unfade()
         self.text.unfade()
         self.box.unfade()
         for line in self.box_lines:
