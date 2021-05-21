@@ -4,7 +4,7 @@ import matplotlib.patches as patches
 
 from .element import Element, ColorChange
 
-bpl.set_style()
+bpl.set_style(font="Avenir", fontweight="medium")
 
 # Element fractions come from Jennifer Johnson
 # https://science.sciencemag.org/content/363/6426/474
