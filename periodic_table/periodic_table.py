@@ -11,7 +11,7 @@ bpl.set_style()
 # specifically table S1
 # https://science.sciencemag.org/content/sci/suppl/2019/01/30/363.6426.474.DC1/aau9540-Johnson-SM.pdf
 elts = [
-    Element(1, " H", 1, 1, frac_bb=1.00),
+    Element(1, "H", 1, 1, frac_bb=1.00),
     Element(2, "He", 1, 18, frac_bb=0.90, frac_snii=0.05, frac_agb=0.05),
     Element(3, "Li", 2, 1, frac_bb=0.25, frac_agb=0.6, frac_cr=0.15),
     Element(4, "Be", 2, 2, frac_cr=1.00),
@@ -92,8 +92,8 @@ elts = [
     Element(79, "Au", 6, 11, frac_s=0.06, frac_r=0.94),
     Element(80, "Hg", 6, 12, frac_s=0.61, frac_r=0.39),
     Element(81, "Tl", 6, 13, frac_s=0.76, frac_r=0.24),
-    Element(82, "Pb", 6, 14, frac_s=0.13, frac_r=0.87),
-    Element(83, "Bi", 6, 15, frac_s=0.74, frac_r=0.26),
+    Element(82, "Pb", 6, 14, frac_s=0.87, frac_r=0.13),
+    Element(83, "Bi", 6, 15, frac_s=0.26, frac_r=0.74),
     Element(84, "Po", 6, 16, frac_unstable=1.0),
     Element(85, "At", 6, 17, frac_unstable=1.0),
     Element(86, "Rn", 6, 18, frac_unstable=1.0),
