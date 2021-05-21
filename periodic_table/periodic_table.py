@@ -438,22 +438,20 @@ class PeriodicTable(object):
         :param source: Source to highlight
         :return: None
         """
-        # Check all the labels
+        source = source.lower()
+        # start with the labels
         for label in self._labels:
-            # low mass is a separate thing
-            if source == "low mass":
-                label_source = "agb"
-            else:
-                label_source = source
-            # then actually do the checking
-            if label == label_source.lower():
+            # the AGB label is tricky, since there is an alias in the labels list.
+            # We need to be sure we don't accidentally unhighlight one of the aliases
+            abg_aliases = ["s", "agb", "low mass"]
+            if label == source or (label in abg_aliases and source in abg_aliases):
                 self._labels[label].highlight_on()
             else:
                 self._labels[label].highlight_off()
 
         # Then the elements
         for elt in elts:
-            elt.highlight_source(source.lower())
+            elt.highlight_source(source)
 
     def unhighlight_all_sources(self):
         """
